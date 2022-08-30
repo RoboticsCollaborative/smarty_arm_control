@@ -19,13 +19,14 @@ add_library(${PROJECT_NAME}_lib
         src/init_AEV.c
         src/rdda_base.c
         src/shm.c
+        src/smarty_arm_control.c
 )
 
 target_link_libraries(${PROJECT_NAME}_lib soem ${OS_LIBS})
 
 # Add the executable files
 add_executable(${PROJECT_NAME}
-        src/rdda_smartyarm.c
+        src/smarty_arm_run.c
         )
 
 # Linking for libraries

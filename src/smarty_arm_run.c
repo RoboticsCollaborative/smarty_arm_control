@@ -15,6 +15,7 @@
 #include "rdda_ecat.h"
 #include "rdda_base.h"
 #include "shm.h"
+#include "smarty_arm_control.h"
 
 volatile sig_atomic_t done = 0;
 void intHandler (int sig) {
@@ -52,14 +53,6 @@ void rdda_run (void *ifnameptr) {
     /* timer */
     cycletime = 250; /* in microseconds */
 
-    /* Initialize controller */
-    /* These two lines are to initialize master to position mode while re-initializing piv gains,
-     * comment out them when running DoB
-     */
-    pivGainSDOwrite(ecatSlaves->aev[0].slave_id, 0, 0); // Pp 400, Vp 100, Kp 18.6
-    pivGainSDOwrite(ecatSlaves->aev[1].slave_id, 0, 0);
-    /**/
-
     initRddaStates(ecatSlaves, rdda);
     rdda_update(ecatSlaves, rdda);
 
@@ -75,14 +68,15 @@ void rdda_run (void *ifnameptr) {
         /* Mark start time */
         clock_gettime(CLOCK_MONOTONIC, &startTime);
 
-        // mutex_lock(&rdda->mutex);
+        mutex_lock(&rdda->mutex);
 
         rdda_update(ecatSlaves, rdda);
+        smartyArmControl(rdda);
 
         /* Error code detection */
         done = errorCheck(ecatSlaves);
 
-        // mutex_unlock(&rdda->mutex);
+        mutex_unlock(&rdda->mutex);
 
         clock_gettime(CLOCK_MONOTONIC, &endTime);
         controlInterval = (endTime.tv_sec-startTime.tv_sec)*usec_per_sec + (endTime.tv_nsec-startTime.tv_nsec)/nsec_per_usec;

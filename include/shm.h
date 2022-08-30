@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #define SHM_SIZE    4096*2
+#define AEV_NUM 6
 
 /** AEV drive CSP Mode inputs to master */
 typedef struct {
@@ -29,6 +30,18 @@ typedef struct {
     double vel_off;
     double tau_off;
 } MotorOut;
+
+/* End-effector state */
+typedef struct {
+    double pos;
+    double vel;
+    double force;
+} EE_state;
+
+/* Arm class */
+typedef struct {
+    EE_state ee[AEV_NUM];
+} Arm;
 
 /** RDDAPacket transmitted using ROS */
 typedef struct {
@@ -69,7 +82,8 @@ typedef struct {
 
 /** EtherCAT slave class */
 typedef struct {
-    AEV_slave motor[2];
+    AEV_slave motor[AEV_NUM];
+    Arm arm[2];
     double freq_anti_alias;
     Timestamp ts;
     pthread_mutex_t mutex;

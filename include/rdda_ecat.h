@@ -12,9 +12,6 @@
 #include "init_AEV.h"
 #include "shm.h"
 
-// #define NSEC_PER_SEC 1000000000
-// #define COUNTS_PER_RADIAN 52151.8917
-
 /** AEV drive CSP Mode inputs to master */
 typedef struct PACKED
 {
@@ -57,7 +54,7 @@ typedef struct
 /** EtherCAT slave class */
 typedef struct
 {
-    aev_slave aev[2];
+    aev_slave aev[AEV_NUM];
     struct timespec ts;
 } ecat_slaves;
 

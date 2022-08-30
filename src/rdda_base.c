@@ -34,7 +34,7 @@ void rdda_update(ecat_slaves *ecatSlaves, Rdda *rdda) {
     ec_receive_processdata(EC_TIMEOUTRET);
 
     /* Inputs */
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < AEV_NUM; i++) {
         rdda->motor[i].motorIn.act_pos = (double)(ecatSlaves->aev[i].in_motor->act_pos) / ecatSlaves->aev[i].counts_per_rad;
         rdda->motor[i].motorIn.act_vel = (double)(ecatSlaves->aev[i].in_motor->act_vel) / ecatSlaves->aev[i].counts_per_rad_sec;
         rdda->motor[i].motorIn.act_tau = (double)(ecatSlaves->aev[i].in_motor->act_tau) / ecatSlaves->aev[i].units_per_nm;
@@ -47,7 +47,7 @@ void rdda_update(ecat_slaves *ecatSlaves, Rdda *rdda) {
 
     /* Outputs */
     // ecatSlaves->aev[0].out_motor->ctrl_wd = 15;
-    for (int j = 0; j < 6; j++) {
+    for (int j = 0; j < AEV_NUM; j++) {
         ecatSlaves->aev[j].out_motor->ctrl_wd = 0;
         ecatSlaves->aev[j].out_motor->tg_pos = (int32)saturation(limit_int32, ecatSlaves->aev[j].init_pos_cnts + (int32)saturation(limit_int32, rdda->motor[j].motorOut.tg_pos * ecatSlaves->aev[j].counts_per_rad));
         ecatSlaves->aev[j].out_motor->vel_off = (int32)saturation(limit_int32, rdda->motor[j].motorOut.vel_off * ecatSlaves->aev[j].counts_per_rad_sec);
@@ -55,7 +55,7 @@ void rdda_update(ecat_slaves *ecatSlaves, Rdda *rdda) {
     }
 
     /* rddaPacket update */
-    for (int i = 0; i < 6; i ++) {
+    for (int i = 0; i < AEV_NUM; i ++) {
         rdda->motor[i].rddaPacket.tau = rdda->motor[i].motorIn.act_tau;
         rdda->motor[i].rddaPacket.pos_out = rdda->motor[i].motorIn.act_pos - rdda->motor[i].init_pos;
         rdda->motor[i].rddaPacket.vel_out = rdda->motor[i].motorIn.act_vel;
@@ -120,7 +120,7 @@ void initRddaStates(ecat_slaves *ecatSlaves, Rdda *rdda) {
     uint16  mot_id[2];
 
     /* Request initial data via SDO */
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < AEV_NUM; i++) {
         mot_id[i] = ecatSlaves->aev[i].slave_id;
         ecatSlaves->aev[i].init_pos_cnts = positionSDOread(mot_id[i]);
         rdda->motor[i].init_pos = (double)(ecatSlaves->aev[i].init_pos_cnts) / ecatSlaves->aev[i].counts_per_rad;
@@ -151,7 +151,7 @@ void initRddaStates(ecat_slaves *ecatSlaves, Rdda *rdda) {
  */
 
 int errorCheck(ecat_slaves *ecatSlaves) {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < AEV_NUM; i++) {
         if (ecatSlaves->aev[i].in_motor->latching_fault == 0x0001) {
             printf("Fault: Data flash CRC failure on aev[%d]. This fault is considered fatal and cannot be cleared\n", i);
             return 1;

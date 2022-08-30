@@ -64,15 +64,15 @@ slaveIdentify(ecat_slaves *slave) {
 static void
 initEcatSlaves(ecat_slaves *ecatSlave) {
     /* old motor setup */
-    for (int mot_id = 0; mot_id < 6; mot_id ++) {
+    for (int mot_id = 0; mot_id < AEV_NUM; mot_id ++) {
         /* Input/output memory allocation */
         ecatSlave->aev[mot_id].in_motor = (motor_input *)ec_slave[ecatSlave->aev[mot_id].slave_id].inputs;
         ecatSlave->aev[mot_id].out_motor = (motor_output *)ec_slave[ecatSlave->aev[mot_id].slave_id].outputs;
         /* Constant parameters assignment */
-        ecatSlave->aev[mot_id].counts_per_rad = 52151.8917;
-        ecatSlave->aev[mot_id].counts_per_rad_sec = 52151.8917*10.0;
-        ecatSlave->aev[mot_id].load_counts_per_rad = 52151.8917/327680*40000;
-        ecatSlave->aev[mot_id].load_counts_per_rad_sec = 52151.8917/327680*40000*10;
+        ecatSlave->aev[mot_id].counts_per_rad = 58426.4162;
+        ecatSlave->aev[mot_id].counts_per_rad_sec = 58426.4162*10.0;
+        ecatSlave->aev[mot_id].load_counts_per_rad = 6366.1977;
+        ecatSlave->aev[mot_id].load_counts_per_rad_sec = 6366.1977*10;
         ecatSlave->aev[mot_id].units_per_nm = 500.0;
     }
 }
@@ -85,8 +85,6 @@ initEcatSlaves(ecat_slaves *ecatSlave) {
 ecat_slaves *initEcatConfig(void *ifnameptr) {
     char *ifname  = (char *)ifnameptr;
 
-//    inOP = FALSE;
-//    needlf = FALSE;
     int expectedWKC;
     int wkc;
 
