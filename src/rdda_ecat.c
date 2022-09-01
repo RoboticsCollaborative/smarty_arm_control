@@ -19,14 +19,14 @@ slaveIdentify(ecat_slaves *slave) {
     int buf = 0;
     for (idx = 1; idx <= ec_slavecount; idx++) {
         /* AEV motor drive */
-        if ((ec_slave[idx].eep_man == 0x000000ab) && (ec_slave[idx].eep_id == 0x00001110)) {
+        if ((ec_slave[idx].eep_man == 0x000000ab) && (ec_slave[idx].eep_id == 0x00001260)) {
             uint32 serial_num;
             buf = sizeof(serial_num);
             ec_SDOread(idx, 0x1018, 4, FALSE, &buf, &serial_num, EC_TIMEOUTRXM);
 
             /* motor1 */
-            // new motor as tele-operator master
-            if (serial_num == 0x256145e) {
+            // right arm base rotation motor drive
+            if (serial_num == 0x0030E8D3) {
                 slave->aev[0].slave_id = idx;
                 /* CompleteAccess disabled for AEV drive */
                 //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
@@ -38,8 +38,8 @@ slaveIdentify(ecat_slaves *slave) {
                 }
             }
             /* motor2 */
-            // new motor as tele-operator master
-            if (serial_num == 0x2561457) {
+            // right arm upper arm motor drive
+            else if (serial_num == 0x0030E8D4) {
                 slave->aev[1].slave_id = idx;
                 /* CompleteAccess disabled for AEV drive */
                 //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
@@ -50,6 +50,22 @@ slaveIdentify(ecat_slaves *slave) {
                     exit(1);
                 }
             }
+
+            /* motor3 */
+            // right arm forearm motor drive
+            else if (serial_num == 0x0030E8DA) {
+                slave->aev[2].slave_id = idx;
+                /* CompleteAccess disabled for AEV drive */
+                //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
+                /* Set PDO mapping */
+                printf("Found %s at position %d\n", ec_slave[idx].name, idx);
+                if (1 == mapMotorPDOs_callback(idx)) {
+                    fprintf(stderr, "Motor3 mapping failed!\n");
+                    exit(1);
+                }
+            }
+
+            // else { printf("Serial number wrong, correct one is %d\n", serial_num);}
         }
 
     }
@@ -122,7 +138,7 @@ ecat_slaves *initEcatConfig(void *ifnameptr) {
     /* Locate slaves */
     slaveIdentify(ecatSlaves);
 
-    if (ecatSlaves->aev[0].slave_id == 0 || ecatSlaves->aev[1].slave_id == 0) {
+    if (ecatSlaves->aev[0].slave_id == 0 || ecatSlaves->aev[1].slave_id == 0 || ecatSlaves->aev[2].slave_id == 0) {
             fprintf(stderr, "Slaves identification failure!");
             exit(1);
     }
@@ -139,6 +155,7 @@ ecat_slaves *initEcatConfig(void *ifnameptr) {
 
     initMotorACD(ecatSlaves->aev[0].slave_id);
     initMotorACD(ecatSlaves->aev[1].slave_id);
+    initMotorACD(ecatSlaves->aev[2].slave_id);
     printf("Slaves initialized, state to OP\n");
 
     /* Check if all slaves are working properly */
@@ -225,6 +242,18 @@ int32 positionSDOread(uint16 slave_id) {
     int32 initial_theta1_cnts = 0;
     int size = sizeof(initial_theta1_cnts);
     ec_SDOread(slave_id, 0x6064, 0, FALSE, &size, &initial_theta1_cnts, EC_TIMEOUTRXM);
+    return initial_theta1_cnts;
+}
+
+/** Read load position value via SDO
+ *
+ * @param slave_id  =   Slave index.
+ * @return position value in counts.
+ */
+int32 loadPositionSDOread(uint16 slave_id) {
+    int32 initial_theta1_cnts = 0;
+    int size = sizeof(initial_theta1_cnts);
+    ec_SDOread(slave_id, 0x2242, 0, FALSE, &size, &initial_theta1_cnts, EC_TIMEOUTRXM);
     return initial_theta1_cnts;
 }
 

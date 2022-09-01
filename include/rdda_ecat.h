@@ -44,6 +44,7 @@ typedef struct
     motor_output *out_motor;
     /* Motor attributes */
     int32 init_pos_cnts;
+    int32 load_init_pos_cnts;
     double counts_per_rad;
     double counts_per_rad_sec;
     double load_counts_per_rad;
@@ -62,6 +63,7 @@ ecat_slaves *initEcatConfig(void *ifnameptr);
 void add_timespec(struct timespec *ts, int64 addtime);
 int64 ec_sync(int64 reftime, int64 cycletime);
 int32 positionSDOread(uint16 slave_id);
+int32 loadPositionSDOread(uint16 slave_id);
 void pivGainSDOwrite(uint16 slave_id, uint16 Pp, uint16 Vp);
 int rddaDriverErrorSDOcheck(uint16 slave_id);
 

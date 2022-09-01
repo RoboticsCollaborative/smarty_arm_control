@@ -9,16 +9,23 @@
 #include "shm.h"
 #include "rdda_base.h"
 
-#define ARM_NUM 2
+#define ARM_NUM 1
 
 typedef struct {
     double c0;
     double c1;
     double c2;
+    double c3;
+    double c4;
+    double c5;
     double s0;
     double s1;
     double s2;
+    double s3;
+    double s4;
+    double s5;
     double jacobian[3][3];
+    double R[3][3];
 } Model;
 
 void smartyArmControl(Rdda *rdda);

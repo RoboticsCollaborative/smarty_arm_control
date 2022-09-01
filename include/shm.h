@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #define SHM_SIZE    4096*2
-#define AEV_NUM 6
+#define AEV_NUM 3
 
 /** AEV drive CSP Mode inputs to master */
 typedef struct {
@@ -65,6 +65,7 @@ typedef struct {
     RDDAPacket rddaPacket;
     /* Constant */
     double init_pos;
+    double load_init_pos;
     /* Parameter */
     double vel_sat;
     double tau_sat;

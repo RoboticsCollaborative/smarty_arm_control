@@ -117,13 +117,15 @@ double saturation(double max_value, double raw_value) {
  */
 void initRddaStates(ecat_slaves *ecatSlaves, Rdda *rdda) {
 
-    uint16  mot_id[2];
+    uint16  mot_id[AEV_NUM];
 
     /* Request initial data via SDO */
     for (int i = 0; i < AEV_NUM; i++) {
         mot_id[i] = ecatSlaves->aev[i].slave_id;
         ecatSlaves->aev[i].init_pos_cnts = positionSDOread(mot_id[i]);
+        ecatSlaves->aev[i].load_init_pos_cnts = loadPositionSDOread(mot_id[i]);
         rdda->motor[i].init_pos = (double)(ecatSlaves->aev[i].init_pos_cnts) / ecatSlaves->aev[i].counts_per_rad;
+        rdda->motor[i].load_init_pos = (double)(ecatSlaves->aev[i].load_init_pos_cnts) / ecatSlaves->aev[i].load_counts_per_rad;
         /* Init motor position */
         rdda->motor[i].motorOut.tg_pos = 0.0;
         rdda->motor[i].motorOut.tau_off = 0.0;

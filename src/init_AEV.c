@@ -118,8 +118,8 @@ int initMotorACD(uint16 slaveIdx)
     SDO_write16(slaveIdx, 0x2381, 1, 0);        /* velocity loop gain (Vp) */
 
     /* Motor limits */
-    SDO_write16(slaveIdx, 0x2110, 0, 2531);     /* peak current limit */
-    SDO_write16(slaveIdx, 0x2111, 0, 721);      /* continuous current limit (units of 0.01A) */
+    SDO_write16(slaveIdx, 0x2110, 0, 2553);     /* peak current limit */
+    SDO_write16(slaveIdx, 0x2111, 0, 786);      /* continuous current limit (units of 0.01A) */
 
     return 0;
 }
