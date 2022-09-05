@@ -14,6 +14,8 @@
 
 #define SHM_SIZE    4096*2
 #define AEV_NUM 3
+#define ARM_NUM 1
+#define DOF 6
 
 /** AEV drive CSP Mode inputs to master */
 typedef struct {
@@ -38,38 +40,33 @@ typedef struct {
     double force;
 } EE_state;
 
-/* Arm class */
-typedef struct {
-    EE_state ee[AEV_NUM];
-} Arm;
-
 /** RDDAPacket transmitted using ROS */
 typedef struct {
     double pos_in;
     double pos_out;
     double vel_in;
     double vel_out;
-    double tau;
+    double force;
     double wave_in;
     double wave_out;
     double wave_in_aux;
     double wave_out_aux;
-    int contact_flag;
     double test;
-} RDDAPacket;
+} EEPacket;
+
+/* Arm class */
+typedef struct {
+    EE_state ee[DOF];
+    EEPacket eePacket[DOF];
+} Arm;
 
 /** AEV slave class */
 typedef struct {
     MotorIn motorIn;
     MotorOut motorOut;
-    RDDAPacket rddaPacket;
     /* Constant */
     double init_pos;
     double load_init_pos;
-    /* Parameter */
-    double vel_sat;
-    double tau_sat;
-    double stiffness;
     /* SDO */
     int Pp;
     int Vp;

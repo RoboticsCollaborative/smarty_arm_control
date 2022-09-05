@@ -1,6 +1,6 @@
 #include "shm.h"
 
-char* RDDA_DATA     =   (char *)"/rdda_data";
+char* SMARTY_ARM_DATA     =   (char *)"/smarty_arm_data";
 
 /** Acquire robust mutex
   *
@@ -102,10 +102,10 @@ Rdda *initRdda() {
     Rdda *rdda;
     void *p;
 
-    if (!createSharedMemory(RDDA_DATA, &p)) {
+    if (!createSharedMemory(SMARTY_ARM_DATA, &p)) {
         rdda = (Rdda *) p;
     } else {
-        fprintf(stderr, "open(RDDA_DATA)\n");
+        fprintf(stderr, "open(SMARTY_ARM_DATA)\n");
         return NULL;
     }
 

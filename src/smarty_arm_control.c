@@ -1,6 +1,7 @@
 #include "smarty_arm_control.h"
 
 void smartyArmControl (Rdda *rdda) {
+
     double lu = 0.44; // upper arm length
     double elbow_h = 0.02947; // elbow joint horizontal shift
     double elbow_v = 0.06393; // elbow joint vertical shift
@@ -11,7 +12,26 @@ void smartyArmControl (Rdda *rdda) {
     double forearm_init_offset = 0.0; // motor 2
     // double num = 3;
 
-    Model model[2];
+    Model model_init[ARM_NUM];
+    double translation_pos_init[3];
+    for (int i = 0; i < ARM_NUM; i ++) {
+        model_init[i].c0 = 1.0;
+        model_init[i].c1 = cos(upper_arm_init_offset);
+        model_init[i].c2 = cos(forearm_init_offset);
+
+        model_init[i].s0 = 0.0;
+        model_init[i].s1 = sin(upper_arm_init_offset);
+        model_init[i].s2 = sin(forearm_init_offset);
+    }
+
+    for (int i = 0; i < ARM_NUM; i ++) {
+        translation_pos_init[0] = (-(lf * model_init[i].c2 - lu * model_init[i].c1) - elbow_h - wrist_h) * model_init[i].c0;
+        translation_pos_init[1] = (-(lf * model_init[i].c2 - lu * model_init[i].c1) - elbow_h - wrist_h) * model_init[i].s0;
+        translation_pos_init[2] = lu * model_init[i].s1 - lf * model_init[i].s2 + elbow_v + wrist_v;
+    }
+    
+
+    Model model[ARM_NUM];
     for (int i = 0; i < ARM_NUM; i ++) {
         model[i].c0 = cos(rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[0 + i * AEV_NUM / 2].init_pos);
         model[i].c1 = cos(-(rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[1 + i * AEV_NUM / 2].init_pos) + upper_arm_init_offset);
@@ -50,34 +70,64 @@ void smartyArmControl (Rdda *rdda) {
 
     /* position */
     for (int i = 0; i < ARM_NUM; i ++) {
-        rdda->arm[i].ee[0].pos = (-(lf * model[i].c2 - lu * model[i].c1) - elbow_h - wrist_h) * model[i].c0;
-        rdda->arm[i].ee[1].pos = (-(lf * model[i].c2 - lu * model[i].c1) - elbow_h - wrist_h) * model[i].s0;
-        rdda->arm[i].ee[2].pos = lu * model[i].s1 - lf * model[i].s2 + elbow_v + wrist_v;
+        rdda->arm[i].ee[0].pos = (-(lf * model[i].c2 - lu * model[i].c1) - elbow_h - wrist_h) * model[i].c0 - translation_pos_init[0];
+        rdda->arm[i].ee[1].pos = (-(lf * model[i].c2 - lu * model[i].c1) - elbow_h - wrist_h) * model[i].s0 - translation_pos_init[1];
+        rdda->arm[i].ee[2].pos = lu * model[i].s1 - lf * model[i].s2 + elbow_v + wrist_v - translation_pos_init[2];
 
         rdda->arm[i].ee[3].pos = atan2(model[i].R[2][1], model[i].R[2][2]);
         rdda->arm[i].ee[4].pos = atan2(-model[i].R[2][0], sqrt(model[i].R[2][1] * model[i].R[2][1] + model[i].R[2][2] * model[i].R[2][2]));
         rdda->arm[i].ee[5].pos = atan2(model[i].R[1][0], model[i].R[0][0]);
     }
 
-    printf("translation x: %+lf, y: %+lf, z: %+lf, rotation x: %+lf, y: %+lf, z: %+lf\r",
-        rdda->arm[0].ee[0].pos, rdda->arm[0].ee[1].pos, rdda->arm[0].ee[2].pos, rdda->arm[0].ee[3].pos, rdda->arm[0].ee[4].pos, rdda->arm[0].ee[5].pos);
+    // printf("translation x: %+lf, y: %+lf, z: %+lf, rotation x: %+lf, y: %+lf, z: %+lf\r",
+        // rdda->arm[0].ee[0].pos, rdda->arm[0].ee[1].pos, rdda->arm[0].ee[2].pos, rdda->arm[0].ee[3].pos, rdda->arm[0].ee[4].pos, rdda->arm[0].ee[5].pos);
 
 
     /* velocity */
     for (int i = 0; i < ARM_NUM; i ++) {
-        rdda->arm[i].ee[0].vel = model[i].jacobian[0][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel\
-                               + model[i].jacobian[0][1] * rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel\
+        rdda->arm[i].ee[0].vel = model[i].jacobian[0][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
+                               + model[i].jacobian[0][1] * (-rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel)
                                + model[i].jacobian[0][2] * rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_vel;
-        rdda->arm[i].ee[1].vel = model[i].jacobian[1][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel\
-                               + model[i].jacobian[1][1] * rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel\
+        rdda->arm[i].ee[1].vel = model[i].jacobian[1][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
+                               + model[i].jacobian[1][1] * (-rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel)
                                + model[i].jacobian[1][2] * rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_vel;
-        rdda->arm[i].ee[2].vel = model[i].jacobian[2][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel\
-                               + model[i].jacobian[2][1] * rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel\
+        rdda->arm[i].ee[2].vel = model[i].jacobian[2][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
+                               + model[i].jacobian[2][1] * (-rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel)
                                + model[i].jacobian[2][2] * rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_vel;
 
     }
 
-    /* force */
- 
+    // printf("%+lf, %+lf, %+lf\r", rdda->arm[0].ee[0].vel, rdda->arm[0].ee[1].vel, rdda->arm[0].ee[2].vel);
+
+    double wave_damping = 10.0;
+    /* interface */
+    for (int i = 0; i < ARM_NUM; i ++) {
+        for (int j = 0; j < DOF / 2; j ++) {
+            rdda->arm[i].ee[j].force = -1.0 * wave_damping * rdda->arm[i].ee[j].vel - sqrt(2.0 * wave_damping) * rdda->arm[i].eePacket[j].wave_in;
+            rdda->arm[i].eePacket[j].wave_out = sqrt(2.0 * wave_damping) * rdda->arm[i].ee[j].vel - rdda->arm[i].eePacket[j].wave_in;
+        }
+
+        for (int j = 0; j < DOF; j ++) {
+            rdda->arm[i].eePacket[j].pos_out = rdda->arm[i].ee[i].pos; // need subtract init position
+        }
+    }
+
+    double motor_torque_raw[3];
+    /* ee force to motor torque */
+    for (int i = 0; i < ARM_NUM; i ++) {
+        motor_torque_raw[0] = model[i].jacobian[0][0] * rdda->arm[i].ee[0].force
+                            + model[i].jacobian[1][0] * rdda->arm[i].ee[1].force
+                            + model[i].jacobian[2][0] * rdda->arm[i].ee[2].force;
+        motor_torque_raw[1] = -(model[i].jacobian[0][1] * rdda->arm[i].ee[0].force
+                            + model[i].jacobian[1][1] * rdda->arm[i].ee[1].force
+                            + model[i].jacobian[2][1] * rdda->arm[i].ee[2].force);
+        motor_torque_raw[2] = model[i].jacobian[0][2] * rdda->arm[i].ee[0].force
+                            + model[i].jacobian[1][2] * rdda->arm[i].ee[1].force
+                            + model[i].jacobian[2][2] * rdda->arm[i].ee[2].force;
+    }
+
+    for (int i = 0; i < AEV_NUM; i ++) {
+        rdda->motor[i].motorOut.tau_off = saturation(MAX_TORQUE, motor_torque_raw[i]);
+    }
 
 }

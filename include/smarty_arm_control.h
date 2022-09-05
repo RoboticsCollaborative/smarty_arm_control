@@ -9,7 +9,7 @@
 #include "shm.h"
 #include "rdda_base.h"
 
-#define ARM_NUM 1
+#define MAX_TORQUE 2.0
 
 typedef struct {
     double c0;
