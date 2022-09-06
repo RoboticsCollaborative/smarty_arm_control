@@ -2,14 +2,14 @@
 
 void smartyArmControl (Rdda *rdda) {
 
-    double lu = 0.44; // upper arm length
-    double elbow_h = 0.02947; // elbow joint horizontal shift
-    double elbow_v = 0.06393; // elbow joint vertical shift
+    double lu = 0.51; // upper arm length
+    double elbow_h = 0.0; // elbow joint horizontal shift
+    double elbow_v = 0.0; // elbow joint vertical shift
     double lf = 0.45; // forearm length
     double wrist_h = 0.28415; // wrist joint horizontal shift
     double wrist_v = 0.03648; // wrist joint vertical shift
-    double upper_arm_init_offset = M_PI / 2; // motor 1
-    double forearm_init_offset = 0.0; // motor 2
+    double upper_arm_init_offset = M_PI * 3 / 4; // motor 1
+    double forearm_init_offset = M_PI / 4; // motor 2
     // double num = 3;
 
     Model model_init[ARM_NUM];
@@ -100,10 +100,11 @@ void smartyArmControl (Rdda *rdda) {
     // printf("%+lf, %+lf, %+lf\r", rdda->arm[0].ee[0].vel, rdda->arm[0].ee[1].vel, rdda->arm[0].ee[2].vel);
 
     double wave_damping = 10.0;
+    double ratio = 5.0;
     /* interface */
     for (int i = 0; i < ARM_NUM; i ++) {
         for (int j = 0; j < DOF / 2; j ++) {
-            rdda->arm[i].ee[j].force = -1.0 * wave_damping * rdda->arm[i].ee[j].vel - sqrt(2.0 * wave_damping) * rdda->arm[i].eePacket[j].wave_in;
+            rdda->arm[i].ee[j].force = -1.0 * (wave_damping * rdda->arm[i].ee[j].vel - sqrt(2.0 * wave_damping) * rdda->arm[i].eePacket[j].wave_in) / ratio;
             rdda->arm[i].eePacket[j].wave_out = sqrt(2.0 * wave_damping) * rdda->arm[i].ee[j].vel - rdda->arm[i].eePacket[j].wave_in;
         }
 
@@ -125,6 +126,8 @@ void smartyArmControl (Rdda *rdda) {
                             + model[i].jacobian[1][2] * rdda->arm[i].ee[1].force
                             + model[i].jacobian[2][2] * rdda->arm[i].ee[2].force;
     }
+
+    // printf("%+lf, %+lf, %+lf\r", rdda->arm[0].ee[0].force, rdda->arm[0].ee[1].force, rdda->arm[0].ee[2].force);
 
     for (int i = 0; i < AEV_NUM; i ++) {
         rdda->motor[i].motorOut.tau_off = saturation(MAX_TORQUE, motor_torque_raw[i]);

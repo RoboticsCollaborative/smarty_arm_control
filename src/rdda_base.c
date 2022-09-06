@@ -48,7 +48,7 @@ void rdda_update(ecat_slaves *ecatSlaves, Rdda *rdda) {
     /* Outputs */
     // ecatSlaves->aev[0].out_motor->ctrl_wd = 15;
     for (int j = 0; j < AEV_NUM; j++) {
-        ecatSlaves->aev[j].out_motor->ctrl_wd = 0;
+        ecatSlaves->aev[j].out_motor->ctrl_wd = 15;
         ecatSlaves->aev[j].out_motor->tg_pos = (int32)saturation(limit_int32, ecatSlaves->aev[j].init_pos_cnts + (int32)saturation(limit_int32, rdda->motor[j].motorOut.tg_pos * ecatSlaves->aev[j].counts_per_rad));
         ecatSlaves->aev[j].out_motor->vel_off = (int32)saturation(limit_int32, rdda->motor[j].motorOut.vel_off * ecatSlaves->aev[j].counts_per_rad_sec);
         ecatSlaves->aev[j].out_motor->tau_off = (int16)saturation(limit_int16, rdda->motor[j].motorOut.tau_off * ecatSlaves->aev[j].units_per_nm);
