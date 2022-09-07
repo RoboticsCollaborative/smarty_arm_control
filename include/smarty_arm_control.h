@@ -24,7 +24,7 @@ typedef struct {
     double s3;
     double s4;
     double s5;
-    double jacobian[3][3];
+    double jacobian[6][6];
     double R[3][3];
 } Model;
 

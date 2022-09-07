@@ -61,8 +61,8 @@ int mapMotorPDOs(uint16 slaveIdx)
 
     wkc += SDO_write8(slaveIdx, 0x1A01, 0, 0);           /* clear the PDO first */
     wkc += SDO_write32(slaveIdx, 0x1A01, 1, 0x21830020); /* Load error code */
-    wkc += SDO_write32(slaveIdx, 0x1A01, 2, 0x22000010); /* analog input */
-    wkc += SDO_write8(slaveIdx, 0x1A01, 0, 2);           /* set number of objects mapped by PDO */
+    // wkc += SDO_write32(slaveIdx, 0x1A01, 2, 0x22000010); /* analog input */
+    wkc += SDO_write8(slaveIdx, 0x1A01, 0, 1);           /* set number of objects mapped by PDO */
 
     /* pre-mapped PDOs that the slave sends to the master */
     wkc += SDO_write8(slaveIdx, 0x1C13, 0, 0);           /* clear SM3 (slave TxPDOs) */
