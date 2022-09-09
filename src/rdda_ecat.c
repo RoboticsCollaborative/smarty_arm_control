@@ -241,7 +241,7 @@ int64 ec_sync(int64 reftime, int64 cycletime) {
 int32 positionSDOread(uint16 slave_id) {
     int32 initial_theta1_cnts = 0;
     int size = sizeof(initial_theta1_cnts);
-    ec_SDOread(slave_id, 0x6064, 0, FALSE, &size, &initial_theta1_cnts, EC_TIMEOUTRXM);
+    ec_SDOread(slave_id, 0x2240, 0, FALSE, &size, &initial_theta1_cnts, EC_TIMEOUTRXM);
     return initial_theta1_cnts;
 }
 

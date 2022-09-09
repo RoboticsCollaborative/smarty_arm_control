@@ -40,8 +40,6 @@ void rdda_update(ecat_slaves *ecatSlaves, Rdda *rdda) {
         rdda->motor[i].motorIn.act_tau = (double)(ecatSlaves->aev[i].in_motor->act_tau) / ecatSlaves->aev[i].units_per_nm;
         rdda->motor[i].motorIn.load_pos = (double)(ecatSlaves->aev[i].in_motor->load_pos) / ecatSlaves->aev[i].load_counts_per_rad;
         rdda->motor[i].motorIn.load_vel = (double)(ecatSlaves->aev[i].in_motor->load_vel) / ecatSlaves->aev[i].load_counts_per_rad_sec;
-        // rdda->motor[i].motorIn.load_vel = (rdda->motor[i].motorIn.load_pos - rdda->motor[i].motorIn.last_load_pos) / 0.25e-3;
-        rdda->motor[i].motorIn.last_load_pos = rdda->motor[i].motorIn.load_pos;
     }
     
     rdda->ts.nsec = ecatSlaves->ts.tv_nsec;
@@ -121,7 +119,6 @@ void initRddaStates(ecat_slaves *ecatSlaves, Rdda *rdda) {
         ecatSlaves->aev[i].load_init_pos_cnts = loadPositionSDOread(mot_id[i]);
         rdda->motor[i].init_pos = (double)(ecatSlaves->aev[i].init_pos_cnts) / ecatSlaves->aev[i].counts_per_rad;
         rdda->motor[i].load_init_pos = (double)(ecatSlaves->aev[i].load_init_pos_cnts) / ecatSlaves->aev[i].load_counts_per_rad;
-        rdda->motor[i].motorIn.last_load_pos = rdda->motor[i].load_init_pos;
         /* Init motor position */
         rdda->motor[i].motorOut.tg_pos = 0.0;
         rdda->motor[i].motorOut.tau_off = 0.0;
@@ -130,14 +127,14 @@ void initRddaStates(ecat_slaves *ecatSlaves, Rdda *rdda) {
     for (int i = 0; i < ARM_NUM; i ++) {
         for (int j = 0; j < DOF; j ++) {
             /* Init ROS outputs */
-            rdda->arm[i].eePacket[j].wave_out = 0.0;
-            rdda->arm[i].eePacket[j].wave_out_aux = 0.0;
-            rdda->arm[i].eePacket[j].pos_out = 0.0;
-            rdda->arm[i].eePacket[j].test = 0.0;
+            rdda->arm[i].ptiPacket[j].wave_out = 0.0;
+            rdda->arm[i].ptiPacket[j].wave_out_aux = 0.0;
+            rdda->arm[i].ptiPacket[j].pos_out = 0.0;
+            rdda->arm[i].ptiPacket[j].test = 0.0;
             /* Init ROS inputs */
-            rdda->arm[i].eePacket[j].pos_in = 0.0;
-            rdda->arm[i].eePacket[j].wave_in = 0.0;
-            rdda->arm[i].eePacket[j].wave_in_aux = 0.0;
+            rdda->arm[i].ptiPacket[j].pos_in = 0.0;
+            rdda->arm[i].ptiPacket[j].wave_in = 0.0;
+            rdda->arm[i].ptiPacket[j].wave_in_aux = 0.0;
         }
     }
 
