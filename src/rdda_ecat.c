@@ -85,10 +85,10 @@ initEcatSlaves(ecat_slaves *ecatSlave) {
         ecatSlave->aev[mot_id].in_motor = (motor_input *)ec_slave[ecatSlave->aev[mot_id].slave_id].inputs;
         ecatSlave->aev[mot_id].out_motor = (motor_output *)ec_slave[ecatSlave->aev[mot_id].slave_id].outputs;
         /* Constant parameters assignment */
-        ecatSlave->aev[mot_id].counts_per_rad = 58426.4162;
-        ecatSlave->aev[mot_id].counts_per_rad_sec = 58426.4162*10.0;
-        ecatSlave->aev[mot_id].load_counts_per_rad = 6366.1977;
-        ecatSlave->aev[mot_id].load_counts_per_rad_sec = 6366.1977*10;
+        ecatSlave->aev[mot_id].counts_per_rad = 29213.2081;
+        ecatSlave->aev[mot_id].counts_per_rad_sec = 29213.2081*10.0;
+        ecatSlave->aev[mot_id].load_counts_per_rad = 3183.0989;
+        ecatSlave->aev[mot_id].load_counts_per_rad_sec = 3183.0989*10;
         ecatSlave->aev[mot_id].units_per_nm = 500.0;
     }
 }
