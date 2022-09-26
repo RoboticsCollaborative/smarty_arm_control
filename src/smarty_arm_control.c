@@ -24,8 +24,8 @@ void smartyArmControl (Rdda *rdda) {
     }
 
     for (int i = 0; i < ARM_NUM; i ++) {
-        translation_pos_init[0] = (-(lf * model_init[i].c2 - lu * model_init[i].c1) -  wrist_h) * model_init[i].s0;
-        translation_pos_init[1] = ((lf * model_init[i].c2 - lu * model_init[i].c1) - wrist_h) * model_init[i].c0;
+        translation_pos_init[0] = -(lf * model_init[i].c2 - lu * model_init[i].c1 + wrist_h) * model_init[i].s0;
+        translation_pos_init[1] = (lf * model_init[i].c2 - lu * model_init[i].c1 + wrist_h) * model_init[i].c0;
         translation_pos_init[2] = lu * model_init[i].s1 - lf * model_init[i].s2  + wrist_v;
     }
     
@@ -63,12 +63,12 @@ void smartyArmControl (Rdda *rdda) {
         cy = -1.0 / sqrt(1 - model[i].R[2][0] * model[i].R[2][0]);
         cz = 1.0 / (model[i].R[0][0] * model[i].R[0][0] + model[i].R[1][0] * model[i].R[1][0]);
 
-        model[i].jacobian[0][0] = (-(lf * model[i].c2 - lu * model[i].c1) - wrist_h) * model[i].c0;
+        model[i].jacobian[0][0] = -(lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].c0;
         model[i].jacobian[0][1] = -lu * model[i].s0 * model[i].s1;
         model[i].jacobian[0][2] = lf * model[i].s0 * model[i].s2;
         model[i].jacobian[0][3] = 0.0; model[i].jacobian[0][4] = 0.0; model[i].jacobian[0][5] = 0.0;
 
-        model[i].jacobian[1][0] = -(-(lf * model[i].c2 - lu * model[i].c1) - wrist_h) * model[i].s0;
+        model[i].jacobian[1][0] = -(lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].s0;
         model[i].jacobian[1][1] = lu * model[i].c0 * model[i].s1;
         model[i].jacobian[1][2] = -lf * model[i].c0 * model[i].s2;
         model[i].jacobian[1][3] = 0.0; model[i].jacobian[1][4] = 0.0; model[i].jacobian[1][5] = 0.0;
@@ -102,8 +102,8 @@ void smartyArmControl (Rdda *rdda) {
 
     /* position */
     for (int i = 0; i < ARM_NUM; i ++) {
-        rdda->arm[i].ee[0].pos = (-(lf * model[i].c2 - lu * model[i].c1) - wrist_h) * model[i].s0 - translation_pos_init[0];
-        rdda->arm[i].ee[1].pos = ((lf * model[i].c2 - lu * model[i].c1) - wrist_h) * model[i].c0 - translation_pos_init[1];
+        rdda->arm[i].ee[0].pos = -(lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].s0 - translation_pos_init[0];
+        rdda->arm[i].ee[1].pos = (lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].c0 - translation_pos_init[1];
         rdda->arm[i].ee[2].pos = lu * model[i].s1 - lf * model[i].s2 + wrist_v - translation_pos_init[2];
 
         if (model[i].R[2][0] < 1.0 && model[i].R[2][0] > -1.0) {
@@ -156,11 +156,12 @@ void smartyArmControl (Rdda *rdda) {
     }
 
     double wave_damping = 10.0;
-    double ratio = 2.0;
+    double ratio[3];
+    ratio[0] = 4; ratio[1] = 4; ratio[2]= 1;
     /* interface */
     for (int i = 0; i < ARM_NUM; i ++) {
         for (int j = 0; j < DOF / 2; j ++) {
-            rdda->arm[i].ee[j].force = -1.0 * (wave_damping * rdda->arm[i].ee[j].vel - sqrt(2.0 * wave_damping) * rdda->arm[i].ptiPacket[j].wave_in) / ratio;
+            rdda->arm[i].ee[j].force = -1.0 * (wave_damping * rdda->arm[i].ee[j].vel - sqrt(2.0 * wave_damping) * rdda->arm[i].ptiPacket[j].wave_in) / ratio[i];
             rdda->arm[i].ptiPacket[j].wave_out = sqrt(2.0 * wave_damping) * rdda->arm[i].ee[j].vel - rdda->arm[i].ptiPacket[j].wave_in;
         }
 
