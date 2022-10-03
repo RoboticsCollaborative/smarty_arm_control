@@ -1,4 +1,4 @@
-/* rdda_smartyarm.c */
+/* arm_smartyarm.c */
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -12,8 +12,8 @@
 #include <time.h>
 #include <math.h>
 
-#include "rdda_ecat.h"
-#include "rdda_base.h"
+#include "arm_ecat.h"
+#include "arm_base.h"
 #include "shm.h"
 #include "smarty_arm_control.h"
 
@@ -25,58 +25,71 @@ void intHandler (int sig) {
     }
 }
 
-void rdda_run (void *ifnameptr) {
+void arm_run (void *ifnameptr) {
     char *ifname = ifnameptr;
     /* EtherCAT struct */
     ecat_slaves *ecatSlaves;
-    /* User friendly struct */
-    Rdda *rdda;
 
-    int cycletime;
-
+    char* ip;
+    if (*ifname == 'l') {
+        ip = (char*)"enx000ec682b108";
+    }
+    else if (*ifname == 'r') {
+        ip = (char*)"enx000ec682b14d";
+    }
+    else {
+        printf("Type r or l for choosing smarty arm\n");
+        exit(1);
+    }
+    
     /* Configure ethercat network and slaves. */
-    ecatSlaves = initEcatConfig(ifname);
+    ecatSlaves = initEcatConfig(ip);
     if (ecatSlaves == NULL) {
         fprintf(stderr, "Init ecatslaves failed.\n");
         exit(1);
     }
     printf("Network configuration succeed.\n");
 
+    /* User friendly struct */
+    Arm *arm;
+
     /* Initialize user-friendly struct */
-    rdda = initRdda();
-    if (rdda == NULL) {
-        fprintf(stderr, "Init rdda failed.\n");
+    arm = initArm(*ifname);
+    if (arm == NULL) {
+        fprintf(stderr, "Init right arm failed.\n");
         exit(1);
     }
     printf("Input/output interface succeed.\n");
 
+    initArmStates(ecatSlaves, arm);
+    arm_update(ecatSlaves, arm);
+
+    int cycletime;
+
     /* timer */
     cycletime = 250; /* in microseconds */
-
-    initRddaStates(ecatSlaves, rdda);
-    rdda_update(ecatSlaves, rdda);
 
     /* Measure time interval for sleep */
     int usec_per_sec = 1000000;
     int nsec_per_usec = 1000;
     struct timespec startTime, endTime;
     int controlInterval;
-    rdda_gettime(ecatSlaves);
+    arm_gettime(ecatSlaves);
 
     while (!done) {
 
         /* Mark start time */
         clock_gettime(CLOCK_MONOTONIC, &startTime);
 
-        mutex_lock(&rdda->mutex);
+        mutex_lock(&arm->mutex);
 
-        rdda_update(ecatSlaves, rdda);
-        smartyArmControl(rdda);
+        arm_update(ecatSlaves, arm);
+        smartyArmControl(arm, *ifname);
 
         /* Error code detection */
         done = errorCheck(ecatSlaves);
 
-        mutex_unlock(&rdda->mutex);
+        mutex_unlock(&arm->mutex);
 
         clock_gettime(CLOCK_MONOTONIC, &endTime);
         controlInterval = (endTime.tv_sec-startTime.tv_sec)*usec_per_sec + (endTime.tv_nsec-startTime.tv_nsec)/nsec_per_usec;
@@ -84,10 +97,10 @@ void rdda_run (void *ifnameptr) {
             printf("\nControl interval time exceeds defined cycle time, CT = %d\n", controlInterval);
             continue;
         }
-        rdda_sleep(ecatSlaves, cycletime-controlInterval);
+        arm_sleep(ecatSlaves, cycletime-controlInterval);
     }
 
-    rddaStop(ecatSlaves);
+    armStop(ecatSlaves);
 
 }
 
@@ -99,14 +112,13 @@ int main(int argc, char **argv) {
     struct sched_param param;
     int policy = SCHED_FIFO;
 
-    printf("SOEM (Simple Open EtherCAT Master)\nRDDA-SMARTYARM Run\n");
+    printf("SOEM (Simple Open EtherCAT Master)\nArm-SMARTYARM Run\n");
 
     if (argc > 1) {
 
-
         /* Create realtime thread */
-        pthread_create(&rt_thread, NULL, (void *)&rdda_run, (void *)argv[1]);
-        // rdda_run(argv[1]);
+        pthread_create(&rt_thread, NULL, (void *)&arm_run, (void *)argv[1]);
+        // arm_run(argv[1]);
 
         /* Scheduler */
         memset(&param, 0, sizeof(param));

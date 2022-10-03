@@ -1,6 +1,6 @@
 #include "smarty_arm_control.h"
 
-void smartyArmControl (Rdda *rdda) {
+void smartyArmControl (Arm *arm, char LR) {
 
     double lu = 0.51; // upper arm length
     double lf = 0.45; // forearm length
@@ -11,183 +11,215 @@ void smartyArmControl (Rdda *rdda) {
     // double num = 3;
     double cx, cy, cz;
 
-    Model model_init[ARM_NUM];
+    Model model_init;
     double translation_pos_init[3];
-    for (int i = 0; i < ARM_NUM; i ++) {
-        model_init[i].c0 = 1.0;
-        model_init[i].c1 = cos(upper_arm_init_offset);
-        model_init[i].c2 = cos(forearm_init_offset);
+    
+    model_init.c0 = 1.0;
+    model_init.c1 = cos(upper_arm_init_offset);
+    model_init.c2 = cos(forearm_init_offset);
 
-        model_init[i].s0 = 0.0;
-        model_init[i].s1 = sin(upper_arm_init_offset);
-        model_init[i].s2 = sin(forearm_init_offset);
-    }
+    model_init.s0 = 0.0;
+    model_init.s1 = sin(upper_arm_init_offset);
+    model_init.s2 = sin(forearm_init_offset);
 
-    for (int i = 0; i < ARM_NUM; i ++) {
-        translation_pos_init[0] = -(lf * model_init[i].c2 - lu * model_init[i].c1 + wrist_h) * model_init[i].s0;
-        translation_pos_init[1] = (lf * model_init[i].c2 - lu * model_init[i].c1 + wrist_h) * model_init[i].c0;
-        translation_pos_init[2] = lu * model_init[i].s1 - lf * model_init[i].s2  + wrist_v;
+    if (LR == 'r') {
+        translation_pos_init[0] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0;
+        translation_pos_init[1] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0;
     }
+    else if (LR == 'l') {
+        translation_pos_init[0] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0;
+        translation_pos_init[1] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0;
+    }
+    translation_pos_init[2] = lu * model_init.s1 - lf * model_init.s2  + wrist_v;
     
 
-    Model model[ARM_NUM];
-    for (int i = 0; i < ARM_NUM; i ++) {
-        /* sin and cosin */
-        model[i].c0 = cos(rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[0 + i * AEV_NUM / 2].init_pos);
-        model[i].c1 = cos(-(rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[1 + i * AEV_NUM / 2].init_pos) + upper_arm_init_offset);
-        model[i].c2 = cos(rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[2 + i * AEV_NUM / 2].init_pos + forearm_init_offset);
-        model[i].c3 = cos(rdda->motor[0 + i * AEV_NUM / 2].motorIn.load_pos - rdda->motor[0 + i * AEV_NUM / 2].load_init_pos);
-        model[i].c4 = cos(rdda->motor[1 + i * AEV_NUM / 2].motorIn.load_pos - rdda->motor[1 + i * AEV_NUM / 2].load_init_pos);
-        model[i].c5 = cos(-(rdda->motor[2 + i * AEV_NUM / 2].motorIn.load_pos - rdda->motor[2 + i * AEV_NUM / 2].load_init_pos));
+    Model model;
+    
+    /* sin and cosin */
+    model.c0 = cos(arm->motor[0].motorIn.act_pos - arm->motor[0].init_pos);
+    model.c1 = cos(-(arm->motor[1].motorIn.act_pos - arm->motor[1].init_pos) + upper_arm_init_offset);
+    model.c2 = cos(arm->motor[2].motorIn.act_pos - arm->motor[2].init_pos + forearm_init_offset);
+    model.c4 = cos(arm->motor[1].motorIn.load_pos - arm->motor[1].load_init_pos);
+    model.c5 = cos(-(arm->motor[2].motorIn.load_pos - arm->motor[2].load_init_pos));
 
-        model[i].s0 = sin(rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[0 + i * AEV_NUM / 2].init_pos);
-        model[i].s1 = sin(-(rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[1 + i * AEV_NUM / 2].init_pos) + upper_arm_init_offset);
-        model[i].s2 = sin(rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_pos - rdda->motor[2 + i * AEV_NUM / 2].init_pos + forearm_init_offset);
-        model[i].s3 = sin(rdda->motor[0 + i * AEV_NUM / 2].motorIn.load_pos - rdda->motor[0 + i * AEV_NUM / 2].load_init_pos);
-        model[i].s4 = sin(rdda->motor[1 + i * AEV_NUM / 2].motorIn.load_pos - rdda->motor[1 + i * AEV_NUM / 2].load_init_pos);
-        model[i].s5 = sin(-(rdda->motor[2 + i * AEV_NUM / 2].motorIn.load_pos - rdda->motor[2 + i * AEV_NUM / 2].load_init_pos));
+    model.s0 = sin(arm->motor[0].motorIn.act_pos - arm->motor[0].init_pos);
+    model.s1 = sin(-(arm->motor[1].motorIn.act_pos - arm->motor[1].init_pos) + upper_arm_init_offset);
+    model.s2 = sin(arm->motor[2].motorIn.act_pos - arm->motor[2].init_pos + forearm_init_offset);
+    model.s4 = sin(arm->motor[1].motorIn.load_pos - arm->motor[1].load_init_pos);
+    model.s5 = sin(-(arm->motor[2].motorIn.load_pos - arm->motor[2].load_init_pos));
 
-        /* base to endeffector rotation matrix */
-        model[i].R[0][0] = model[i].c0 * model[i].c3 * model[i].c4 - model[i].s0 * model[i].s4;
-        model[i].R[0][1] = -model[i].c5 * (model[i].c4 * model[i].s0 + model[i].c0 * model[i].c3 * model[i].s4) + model[i].c0 * model[i].s3 * model[i].s5;
-        model[i].R[0][2] = model[i].s5 * (model[i].c4 * model[i].s0 + model[i].c0 * model[i].c3 * model[i].s4) + model[i].c0 * model[i].c5 * model[i].s3;
-        model[i].R[1][0] = model[i].c0 * model[i].s4 + model[i].c3 * model[i].c4 * model[i].s0;
-        model[i].R[1][1] = model[i].c5 * (model[i].c0 * model[i].c4 - model[i].c3 * model[i].s0 * model[i].s4) + model[i].s0 * model[i].s3 * model[i].s5;
-        model[i].R[1][2] = model[i].c5 * model[i].s0 * model[i].s3 - model[i].s5 * (model[i].c0 * model[i].c4 - model[i].c3 * model[i].s0 * model[i].s4);
-        model[i].R[2][0] = -model[i].c4 * model[i].s3;
-        model[i].R[2][1] = model[i].c3 * model[i].s5 + model[i].c5 * model[i].s3 * model[i].s4;
-        model[i].R[2][2] = model[i].c3 * model[i].c5 - model[i].s3 * model[i].s4 * model[i].s5;
-
-        /* Jacobian */
-        cx = 1.0 / (model[i].R[2][2] * model[i].R[2][2] + model[i].R[2][1] * model[i].R[2][1]);
-        cy = -1.0 / sqrt(1 - model[i].R[2][0] * model[i].R[2][0]);
-        cz = 1.0 / (model[i].R[0][0] * model[i].R[0][0] + model[i].R[1][0] * model[i].R[1][0]);
-
-        model[i].jacobian[0][0] = -(lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].c0;
-        model[i].jacobian[0][1] = -lu * model[i].s0 * model[i].s1;
-        model[i].jacobian[0][2] = lf * model[i].s0 * model[i].s2;
-        model[i].jacobian[0][3] = 0.0; model[i].jacobian[0][4] = 0.0; model[i].jacobian[0][5] = 0.0;
-
-        model[i].jacobian[1][0] = -(lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].s0;
-        model[i].jacobian[1][1] = lu * model[i].c0 * model[i].s1;
-        model[i].jacobian[1][2] = -lf * model[i].c0 * model[i].s2;
-        model[i].jacobian[1][3] = 0.0; model[i].jacobian[1][4] = 0.0; model[i].jacobian[1][5] = 0.0;
-
-        model[i].jacobian[2][0] = 0.0;
-        model[i].jacobian[2][1] = lu * model[i].c1;
-        model[i].jacobian[2][2] = -lf * model[i].c2;
-        model[i].jacobian[2][3] = 0.0; model[i].jacobian[2][4] = 0.0; model[i].jacobian[2][5] = 0.0;
-
-        model[i].jacobian[3][0] = 0.0; model[i].jacobian[3][1] = 0.0; model[i].jacobian[3][2] = 0.0;
-        model[i].jacobian[3][3] = cx * ((-model[i].s3 * model[i].s5 + model[i].c5 * model[i].c3 * model[i].s4) * model[i].R[2][2] 
-                                - (-model[i].s3 * model[i].c5 - model[i].c3 * model[i].s4 * model[i].s5) * model[i].R[2][1]);
-        model[i].jacobian[3][4] = cx * ((model[i].c5 * model[i].s3 * model[i].c4) * model[i].R[2][2]
-                                 - (-model[i].s3 * model[i].c4 * model[i].s5) * model[i].R[2][1]);
-        model[i].jacobian[3][5] = cx * ((model[i].c3 * model[i].c5 - model[i].s5 * model[i].s3 * model[i].s4) * model[i].R[2][2]
-                                 - (-model[i].c3 * model[i].s5 - model[i].s3 * model[i].s4 * model[i].c5) * model[i].R[2][1]);
-
-        model[i].jacobian[4][0] = 0.0; model[i].jacobian[4][1] = 0.0; model[i].jacobian[4][2] = 0.0;
-        model[i].jacobian[4][3] = cy * (-model[i].c4 * model[i].c3);
-        model[i].jacobian[4][4] = cy * (model[i].s4 * model[i].s3);
-        model[i].jacobian[4][5] = 0.0;
-
-        model[i].jacobian[5][1] = 0.0; model[i].jacobian[5][2] = 0.0; model[i].jacobian[5][5] = 0.0;
-        model[i].jacobian[5][0] = cz * ((-model[i].s0 * model[i].s4 + model[i].c3 * model[i].c3 * model[i].c0) * model[i].R[0][0] 
-                                - (-model[i].s0 * model[i].c3 * model[i].c4 - model[i].c0 * model[i].s4) * model[i].R[1][0]);
-        model[i].jacobian[5][3] = cz * ((-model[i].s3 * model[i].c4 * model[i].s0) * model[i].R[0][0] 
-                                - (-model[i].c0 * model[i].s3 * model[i].c4) * model[i].R[1][0]);
-        model[i].jacobian[5][4] = cz * ((model[i].c0 * model[i].c4 - model[i].c3 * model[i].s4 * model[i].s0) * model[i].R[0][0] 
-                                - (-model[i].c0 * model[i].c3 * model[i].s4 - model[i].s0 * model[i].c4) * model[i].R[1][0]);
+    if (LR == 'r') {
+        model.c3 = cos(arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos);
+        model.s3 = sin(arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos);
+    }
+    else if (LR == 'l') {
+        model.c3 = cos(-(arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos));
+        model.s3 = sin(-(arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos));
     }
 
-    /* position */
-    for (int i = 0; i < ARM_NUM; i ++) {
-        rdda->arm[i].ee[0].pos = -(lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].s0 - translation_pos_init[0];
-        rdda->arm[i].ee[1].pos = (lf * model[i].c2 - lu * model[i].c1 + wrist_h) * model[i].c0 - translation_pos_init[1];
-        rdda->arm[i].ee[2].pos = lu * model[i].s1 - lf * model[i].s2 + wrist_v - translation_pos_init[2];
+    /* base to endeffector rotation matrix */
+    model.R[0][0] = model.c0 * model.c3 * model.c4 - model.s0 * model.s4;
+    model.R[0][1] = -model.c5 * (model.c4 * model.s0 + model.c0 * model.c3 * model.s4) + model.c0 * model.s3 * model.s5;
+    model.R[0][2] = model.s5 * (model.c4 * model.s0 + model.c0 * model.c3 * model.s4) + model.c0 * model.c5 * model.s3;
+    model.R[1][0] = model.c0 * model.s4 + model.c3 * model.c4 * model.s0;
+    model.R[1][1] = model.c5 * (model.c0 * model.c4 - model.c3 * model.s0 * model.s4) + model.s0 * model.s3 * model.s5;
+    model.R[1][2] = model.c5 * model.s0 * model.s3 - model.s5 * (model.c0 * model.c4 - model.c3 * model.s0 * model.s4);
+    model.R[2][0] = -model.c4 * model.s3;
+    model.R[2][1] = model.c3 * model.s5 + model.c5 * model.s3 * model.s4;
+    model.R[2][2] = model.c3 * model.c5 - model.s3 * model.s4 * model.s5;
 
-        if (model[i].R[2][0] < 1.0 && model[i].R[2][0] > -1.0) {
-            rdda->arm[i].ee[3].pos = atan2(model[i].R[2][1], model[i].R[2][2]);
-            rdda->arm[i].ee[4].pos = atan2(-model[i].R[2][0], sqrt(model[i].R[2][1] * model[i].R[2][1] + model[i].R[2][2] * model[i].R[2][2]));
-            rdda->arm[i].ee[5].pos = atan2(model[i].R[1][0], model[i].R[0][0]);
-        }
-        else if (model[i].R[2][0] == 1.0) {
-            rdda->arm[i].ee[3].pos = 0.0;
-            rdda->arm[i].ee[4].pos = M_PI / 2;
-            rdda->arm[i].ee[5].pos = -atan2(-model[i].R[1][2], model[i].R[1][1]);
-        }
-        else if (model[i].R[2][0] == 1.0) {
-            rdda->arm[i].ee[3].pos = 0.0;
-            rdda->arm[i].ee[4].pos = -M_PI / 2;
-            rdda->arm[i].ee[5].pos = atan2(-model[i].R[1][2], model[i].R[1][1]);
-        }
-        else {
-            printf("No rotation angle solution!\n");
-        }
+    /* Jacobian */
+    cx = 1.0 / (model.R[2][2] * model.R[2][2] + model.R[2][1] * model.R[2][1]);
+    cy = -1.0 / sqrt(1 - model.R[2][0] * model.R[2][0]);
+    cz = 1.0 / (model.R[0][0] * model.R[0][0] + model.R[1][0] * model.R[1][0]);
+
+    model.jacobian[0][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.c0;
+    model.jacobian[0][1] = -lu * model.s0 * model.s1;
+    model.jacobian[0][2] = lf * model.s0 * model.s2;
+    model.jacobian[0][3] = 0.0; model.jacobian[0][4] = 0.0; model.jacobian[0][5] = 0.0;
+
+    model.jacobian[1][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.s0;
+    model.jacobian[1][1] = lu * model.c0 * model.s1;
+    model.jacobian[1][2] = -lf * model.c0 * model.s2;
+    model.jacobian[1][3] = 0.0; model.jacobian[1][4] = 0.0; model.jacobian[1][5] = 0.0;
+
+    model.jacobian[2][0] = 0.0;
+    model.jacobian[2][1] = lu * model.c1;
+    model.jacobian[2][2] = -lf * model.c2;
+    model.jacobian[2][3] = 0.0; model.jacobian[2][4] = 0.0; model.jacobian[2][5] = 0.0;
+
+    model.jacobian[3][0] = 0.0; model.jacobian[3][1] = 0.0; model.jacobian[3][2] = 0.0;
+    model.jacobian[3][3] = cx * ((-model.s3 * model.s5 + model.c5 * model.c3 * model.s4) * model.R[2][2] 
+                            - (-model.s3 * model.c5 - model.c3 * model.s4 * model.s5) * model.R[2][1]);
+    model.jacobian[3][4] = cx * ((model.c5 * model.s3 * model.c4) * model.R[2][2]
+                                - (-model.s3 * model.c4 * model.s5) * model.R[2][1]);
+    model.jacobian[3][5] = cx * ((model.c3 * model.c5 - model.s5 * model.s3 * model.s4) * model.R[2][2]
+                                - (-model.c3 * model.s5 - model.s3 * model.s4 * model.c5) * model.R[2][1]);
+
+    model.jacobian[4][0] = 0.0; model.jacobian[4][1] = 0.0; model.jacobian[4][2] = 0.0;
+    model.jacobian[4][3] = cy * (-model.c4 * model.c3);
+    model.jacobian[4][4] = cy * (model.s4 * model.s3);
+    model.jacobian[4][5] = 0.0;
+
+    model.jacobian[5][1] = 0.0; model.jacobian[5][2] = 0.0; model.jacobian[5][5] = 0.0;
+    model.jacobian[5][0] = cz * ((-model.s0 * model.s4 + model.c3 * model.c3 * model.c0) * model.R[0][0] 
+                            - (-model.s0 * model.c3 * model.c4 - model.c0 * model.s4) * model.R[1][0]);
+    model.jacobian[5][3] = cz * ((-model.s3 * model.c4 * model.s0) * model.R[0][0] 
+                            - (-model.c0 * model.s3 * model.c4) * model.R[1][0]);
+    model.jacobian[5][4] = cz * ((model.c0 * model.c4 - model.c3 * model.s4 * model.s0) * model.R[0][0] 
+                            - (-model.c0 * model.c3 * model.s4 - model.s0 * model.c4) * model.R[1][0]);
+
+    /* position */
+    if (LR == 'r') {
+        arm->ee[0].pos = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.s0 - translation_pos_init[0];
+        arm->ee[1].pos = (lf * model.c2 - lu * model.c1 + wrist_h) * model.c0 - translation_pos_init[1];
+    }
+    else if (LR == 'l') {
+        arm->ee[0].pos = (lf * model.c2 - lu * model.c1 + wrist_h) * model.s0 - translation_pos_init[0];
+        arm->ee[1].pos = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.c0 - translation_pos_init[1];
+    }
+    arm->ee[2].pos = lu * model.s1 - lf * model.s2 + wrist_v - translation_pos_init[2];
+
+    if (model.R[2][0] < 1.0 && model.R[2][0] > -1.0) {
+        arm->ee[3].pos = atan2(model.R[2][1], model.R[2][2]);
+        arm->ee[4].pos = atan2(-model.R[2][0], sqrt(model.R[2][1] * model.R[2][1] + model.R[2][2] * model.R[2][2]));
+        arm->ee[5].pos = atan2(model.R[1][0], model.R[0][0]);
+    }
+    else if (model.R[2][0] == 1.0) {
+        arm->ee[3].pos = 0.0;
+        arm->ee[4].pos = M_PI / 2;
+        arm->ee[5].pos = -atan2(-model.R[1][2], model.R[1][1]);
+    }
+    else if (model.R[2][0] == 1.0) {
+        arm->ee[3].pos = 0.0;
+        arm->ee[4].pos = -M_PI / 2;
+        arm->ee[5].pos = atan2(-model.R[1][2], model.R[1][1]);
+    }
+    else {
+        printf("No rotation angle solution!\n");
     }
 
     // printf("translation x: %+lf, y: %+lf, z: %+lf, rotation x: %+lf, y: %+lf, z: %+lf\r",
-        // rdda->arm[0].ee[0].pos, rdda->arm[0].ee[1].pos, rdda->arm[0].ee[2].pos, rdda->arm[0].ee[3].pos, rdda->arm[0].ee[4].pos, rdda->arm[0].ee[5].pos);
+        // arm->arm[0].ee[0].pos, arm->arm[0].ee[1].pos, arm->arm[0].ee[2].pos, arm->arm[0].ee[3].pos, arm->arm[0].ee[4].pos, arm->arm[0].ee[5].pos);
 
 
     /* velocity */
-    for (int i = 0; i < ARM_NUM; i ++) {
-        rdda->arm[i].ee[0].vel = model[i].jacobian[0][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
-                               + model[i].jacobian[0][1] * (-rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel)
-                               + model[i].jacobian[0][2] * rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_vel;
-        rdda->arm[i].ee[1].vel = model[i].jacobian[1][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
-                               + model[i].jacobian[1][1] * (-rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel)
-                               + model[i].jacobian[1][2] * rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_vel;
-        rdda->arm[i].ee[2].vel = model[i].jacobian[2][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
-                               + model[i].jacobian[2][1] * (-rdda->motor[1 + i * AEV_NUM / 2].motorIn.act_vel)
-                               + model[i].jacobian[2][2] * rdda->motor[2 + i * AEV_NUM / 2].motorIn.act_vel;
-        
-        rdda->arm[i].ee[3].vel = model[i].jacobian[3][3] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.load_vel
-                               + model[i].jacobian[3][4] * rdda->motor[1 + i * AEV_NUM / 2].motorIn.load_vel
-                               + model[i].jacobian[3][5] * (-rdda->motor[2 + i * AEV_NUM / 2].motorIn.load_vel);
-        rdda->arm[i].ee[4].vel = model[i].jacobian[4][3] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.load_vel
-                               + model[i].jacobian[4][4] * rdda->motor[1 + i * AEV_NUM / 2].motorIn.load_vel
-                               + model[i].jacobian[4][5] * (-rdda->motor[2 + i * AEV_NUM / 2].motorIn.load_vel);
-        rdda->arm[i].ee[5].vel = model[i].jacobian[5][0] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.act_vel
-                               + model[i].jacobian[5][3] * rdda->motor[0 + i * AEV_NUM / 2].motorIn.load_vel
-                               + model[i].jacobian[5][4] * rdda->motor[1 + i * AEV_NUM / 2].motorIn.load_vel
-                               + model[i].jacobian[5][5] * (-rdda->motor[2 + i * AEV_NUM / 2].motorIn.load_vel);
+    if (LR == 'r') {
+        arm->ee[0].vel = model.jacobian[0][0] * arm->motor[0].motorIn.act_vel
+                        + model.jacobian[0][1] * (-arm->motor[1].motorIn.act_vel)
+                        + model.jacobian[0][2] * arm->motor[2].motorIn.act_vel;
+        arm->ee[1].vel = model.jacobian[1][0] * arm->motor[0].motorIn.act_vel
+                        + model.jacobian[1][1] * (-arm->motor[1].motorIn.act_vel)
+                        + model.jacobian[1][2] * arm->motor[2].motorIn.act_vel;
+    }
+    else if (LR == 'l') {
+        arm->ee[0].vel = -(model.jacobian[0][0] * arm->motor[0].motorIn.act_vel
+                        + model.jacobian[0][1] * (-arm->motor[1].motorIn.act_vel)
+                        + model.jacobian[0][2] * arm->motor[2].motorIn.act_vel);
+        arm->ee[1].vel = -(model.jacobian[1][0] * arm->motor[0].motorIn.act_vel
+                        + model.jacobian[1][1] * (-arm->motor[1].motorIn.act_vel)
+                        + model.jacobian[1][2] * arm->motor[2].motorIn.act_vel);
+    }
 
+    arm->ee[2].vel = model.jacobian[2][0] * arm->motor[0].motorIn.act_vel
+                    + model.jacobian[2][1] * (-arm->motor[1].motorIn.act_vel)
+                    + model.jacobian[2][2] * arm->motor[2].motorIn.act_vel;
+    
+
+    if (LR == 'r') {
+        arm->ee[3].vel = model.jacobian[3][3] * arm->motor[0].motorIn.load_vel
+                        + model.jacobian[3][4] * arm->motor[1].motorIn.load_vel
+                        + model.jacobian[3][5] * (-arm->motor[2].motorIn.load_vel);
+        arm->ee[4].vel = model.jacobian[4][3] * arm->motor[0].motorIn.load_vel
+                        + model.jacobian[4][4] * arm->motor[1].motorIn.load_vel
+                        + model.jacobian[4][5] * (-arm->motor[2].motorIn.load_vel);
+        arm->ee[5].vel = model.jacobian[5][0] * arm->motor[0].motorIn.act_vel
+                        + model.jacobian[5][3] * arm->motor[0].motorIn.load_vel
+                        + model.jacobian[5][4] * arm->motor[1].motorIn.load_vel
+                        + model.jacobian[5][5] * (-arm->motor[2].motorIn.load_vel);
+    }
+    else if (LR == 'l') {
+        arm->ee[3].vel = model.jacobian[3][3] * (-arm->motor[0].motorIn.load_vel)
+                        + model.jacobian[3][4] * arm->motor[1].motorIn.load_vel
+                        + model.jacobian[3][5] * (-arm->motor[2].motorIn.load_vel);
+        arm->ee[4].vel = model.jacobian[4][3] * (-arm->motor[0].motorIn.load_vel)
+                        + model.jacobian[4][4] * arm->motor[1].motorIn.load_vel
+                        + model.jacobian[4][5] * (-arm->motor[2].motorIn.load_vel);
+        arm->ee[5].vel = model.jacobian[5][0] * arm->motor[0].motorIn.act_vel
+                        + model.jacobian[5][3] * (-arm->motor[0].motorIn.load_vel)
+                        + model.jacobian[5][4] * arm->motor[1].motorIn.load_vel
+                        + model.jacobian[5][5] * (-arm->motor[2].motorIn.load_vel);
     }
 
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 4; ratio[1] = 4; ratio[2]= 1;
+    ratio[0] = 4; ratio[1] = 4; ratio[2]= 2;
     /* interface */
-    for (int i = 0; i < ARM_NUM; i ++) {
-        for (int j = 0; j < DOF / 2; j ++) {
-            rdda->arm[i].ee[j].force = -1.0 * (wave_damping * rdda->arm[i].ee[j].vel - sqrt(2.0 * wave_damping) * rdda->arm[i].ptiPacket[j].wave_in) / ratio[i];
-            rdda->arm[i].ptiPacket[j].wave_out = sqrt(2.0 * wave_damping) * rdda->arm[i].ee[j].vel - rdda->arm[i].ptiPacket[j].wave_in;
-        }
+    for (int j = 0; j < DOF / 2; j ++) {
+        arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];
+        arm->ptiPacket[j].wave_out = sqrt(2.0 * wave_damping) * arm->ee[j].vel - arm->ptiPacket[j].wave_in;
+    }
 
-        for (int j = 0; j < DOF; j ++) {
-            rdda->arm[i].ptiPacket[j].pos_out = rdda->arm[i].ee[i].pos;
-        }
+    for (int j = 0; j < DOF; j ++) {
+        arm->ptiPacket[j].pos_out = arm->ee[j].pos;
     }
 
     double motor_torque_raw[3];
     /* ee force to motor torque */
-    for (int i = 0; i < ARM_NUM; i ++) {
-        motor_torque_raw[0] = model[i].jacobian[0][0] * rdda->arm[i].ee[0].force
-                            + model[i].jacobian[1][0] * rdda->arm[i].ee[1].force
-                            + model[i].jacobian[2][0] * rdda->arm[i].ee[2].force;
-        motor_torque_raw[1] = -(model[i].jacobian[0][1] * rdda->arm[i].ee[0].force
-                            + model[i].jacobian[1][1] * rdda->arm[i].ee[1].force
-                            + model[i].jacobian[2][1] * rdda->arm[i].ee[2].force);
-        motor_torque_raw[2] = model[i].jacobian[0][2] * rdda->arm[i].ee[0].force
-                            + model[i].jacobian[1][2] * rdda->arm[i].ee[1].force
-                            + model[i].jacobian[2][2] * rdda->arm[i].ee[2].force;
-    }
+    motor_torque_raw[0] = model.jacobian[0][0] * arm->ee[0].force
+                        + model.jacobian[1][0] * arm->ee[1].force
+                        + model.jacobian[2][0] * arm->ee[2].force;
+    motor_torque_raw[1] = -(model.jacobian[0][1] * arm->ee[0].force
+                        + model.jacobian[1][1] * arm->ee[1].force
+                        + model.jacobian[2][1] * arm->ee[2].force);
+    motor_torque_raw[2] = model.jacobian[0][2] * arm->ee[0].force
+                        + model.jacobian[1][2] * arm->ee[1].force
+                        + model.jacobian[2][2] * arm->ee[2].force;
 
-    // printf("%+lf, %+lf, %+lf\r", rdda->arm[0].ee[0].force, rdda->arm[0].ee[1].force, rdda->arm[0].ee[2].force);
+    // printf("%+lf, %+lf, %+lf\r", arm->ee[0].force, arm->ee[1].force, arm->ee[2].force);
 
     for (int i = 0; i < AEV_NUM; i ++) {
-        rdda->motor[i].motorOut.tau_off = saturation(MAX_TORQUE, motor_torque_raw[i]);
+        arm->motor[i].motorOut.tau_off = saturation(MAX_TORQUE, motor_torque_raw[i]);
     }
 
 }

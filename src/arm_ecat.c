@@ -1,6 +1,6 @@
-/** rdda_ecat.c */
+/** arm_ecat.c */
 
-#include "rdda_ecat.h"
+#include "arm_ecat.h"
 
 /* SOEM global vars */
 char IOmap[4096];
@@ -10,7 +10,7 @@ char IOmap[4096];
 
 /** Locate and identify EtherCAT slaves.
  *
- * @param rdda_slave    = Slave index group.
+ * @param arm_slave    = Slave index group.
  * @return 0 on success.
  */
 static int
@@ -24,9 +24,49 @@ slaveIdentify(ecat_slaves *slave) {
             buf = sizeof(serial_num);
             ec_SDOread(idx, 0x1018, 4, FALSE, &buf, &serial_num, EC_TIMEOUTRXM);
 
-            /* motor1 */
+            /* motor0 */
             // right arm base rotation motor drive
             if (serial_num == 0x0030E8D3) {
+                slave->aev[0].slave_id = idx;
+                /* CompleteAccess disabled for AEV drive */
+                //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
+                /* Set PDO mapping */
+                printf("Found %s at position %d\n", ec_slave[idx].name, idx);
+                if (1 == mapMotorPDOs_callback(idx)) {
+                    fprintf(stderr, "Motor0 mapping failed!\n");
+                    exit(1);
+                }
+            }
+            /* motor1 */
+            // right arm upper arm motor drive
+            else if (serial_num == 0x0030E8D4) {
+                slave->aev[1].slave_id = idx;
+                /* CompleteAccess disabled for AEV drive */
+                //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
+                /* Set PDO mapping */
+                printf("Found %s at position %d\n", ec_slave[idx].name, idx);
+                if (1 == mapMotorPDOs_callback(idx)) {
+                    fprintf(stderr, "Motor1 mapping failed!\n");
+                    exit(1);
+                }
+            }
+            /* motor2 */
+            // right arm forearm motor drive
+            else if (serial_num == 0x0030E8DA) {
+                slave->aev[2].slave_id = idx;
+                /* CompleteAccess disabled for AEV drive */
+                //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
+                /* Set PDO mapping */
+                printf("Found %s at position %d\n", ec_slave[idx].name, idx);
+                if (1 == mapMotorPDOs_callback(idx)) {
+                    fprintf(stderr, "Motor2 mapping failed!\n");
+                    exit(1);
+                }
+            }
+
+            /* motor0 */
+            // left arm base rotation motor drive
+            else if (serial_num == 0x01436A04) {
                 slave->aev[0].slave_id = idx;
                 /* CompleteAccess disabled for AEV drive */
                 //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
@@ -37,30 +77,29 @@ slaveIdentify(ecat_slaves *slave) {
                     exit(1);
                 }
             }
-            /* motor2 */
-            // right arm upper arm motor drive
-            else if (serial_num == 0x0030E8D4) {
+            /* motor1 */
+            // left arm upper arm motor drive
+            else if (serial_num == 0x01436A01) {
                 slave->aev[1].slave_id = idx;
                 /* CompleteAccess disabled for AEV drive */
                 //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
                 /* Set PDO mapping */
                 printf("Found %s at position %d\n", ec_slave[idx].name, idx);
                 if (1 == mapMotorPDOs_callback(idx)) {
-                    fprintf(stderr, "Motor3 mapping failed!\n");
+                    fprintf(stderr, "Motor4 mapping failed!\n");
                     exit(1);
                 }
             }
-
-            /* motor3 */
-            // right arm forearm motor drive
-            else if (serial_num == 0x0030E8DA) {
+            /* motor2 */
+            // left arm forearm motor drive
+            else if (serial_num == 0x01436A03) {
                 slave->aev[2].slave_id = idx;
                 /* CompleteAccess disabled for AEV drive */
                 //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
                 /* Set PDO mapping */
                 printf("Found %s at position %d\n", ec_slave[idx].name, idx);
                 if (1 == mapMotorPDOs_callback(idx)) {
-                    fprintf(stderr, "Motor3 mapping failed!\n");
+                    fprintf(stderr, "Motor5 mapping failed!\n");
                     exit(1);
                 }
             }
@@ -153,9 +192,9 @@ ecat_slaves *initEcatConfig(void *ifnameptr) {
     /* Wait for all salves to reach SAFE_OP state */
     ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
 
-    initMotorACD(ecatSlaves->aev[0].slave_id);
-    initMotorACD(ecatSlaves->aev[1].slave_id);
-    initMotorACD(ecatSlaves->aev[2].slave_id);
+    initMotorACD(ecatSlaves->aev[3].slave_id);
+    initMotorACD(ecatSlaves->aev[4].slave_id);
+    initMotorACD(ecatSlaves->aev[5].slave_id);
     printf("Slaves initialized, state to OP\n");
 
     /* Check if all slaves are working properly */

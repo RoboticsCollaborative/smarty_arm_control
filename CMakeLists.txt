@@ -15,9 +15,9 @@ include_directories(
 
 # Add the source files from the <src> directory
 add_library(${PROJECT_NAME}_lib
-        src/rdda_ecat.c
+        src/arm_ecat.c
         src/init_AEV.c
-        src/rdda_base.c
+        src/arm_base.c
         src/shm.c
         src/smarty_arm_control.c
 )

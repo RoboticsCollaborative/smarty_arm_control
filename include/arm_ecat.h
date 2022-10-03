@@ -1,5 +1,5 @@
-#ifndef RDDA_ECAT_H
-#define RDDA_ECAT_H
+#ifndef ARM_ECAT_H
+#define ARM_ECAT_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +66,6 @@ int64 ec_sync(int64 reftime, int64 cycletime);
 int32 positionSDOread(uint16 slave_id);
 int32 loadPositionSDOread(uint16 slave_id);
 void pivGainSDOwrite(uint16 slave_id, uint16 Pp, uint16 Vp);
-int rddaDriverErrorSDOcheck(uint16 slave_id);
+int armDriverErrorSDOcheck(uint16 slave_id);
 
-#endif //RDDA_ECAT_H
+#endif //ARM_ECAT_H

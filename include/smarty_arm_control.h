@@ -7,7 +7,7 @@
 #include <math.h>
 
 #include "shm.h"
-#include "rdda_base.h"
+#include "arm_base.h"
 
 #define MAX_TORQUE 2.0
 
@@ -28,6 +28,6 @@ typedef struct {
     double R[3][3];
 } Model;
 
-void smartyArmControl(Rdda *rdda);
+void smartyArmControl(Arm *arm, char LR);
 
 #endif // SMARTY_ARM_CONTROL_H
