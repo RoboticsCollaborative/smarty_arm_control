@@ -192,9 +192,9 @@ ecat_slaves *initEcatConfig(void *ifnameptr) {
     /* Wait for all salves to reach SAFE_OP state */
     ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
 
-    initMotorACD(ecatSlaves->aev[3].slave_id);
-    initMotorACD(ecatSlaves->aev[4].slave_id);
-    initMotorACD(ecatSlaves->aev[5].slave_id);
+    initMotorACD(ecatSlaves->aev[0].slave_id);
+    initMotorACD(ecatSlaves->aev[1].slave_id);
+    initMotorACD(ecatSlaves->aev[2].slave_id);
     printf("Slaves initialized, state to OP\n");
 
     /* Check if all slaves are working properly */

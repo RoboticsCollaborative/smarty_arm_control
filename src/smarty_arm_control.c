@@ -73,14 +73,28 @@ void smartyArmControl (Arm *arm, char LR) {
     cy = -1.0 / sqrt(1 - model.R[2][0] * model.R[2][0]);
     cz = 1.0 / (model.R[0][0] * model.R[0][0] + model.R[1][0] * model.R[1][0]);
 
-    model.jacobian[0][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.c0;
-    model.jacobian[0][1] = -lu * model.s0 * model.s1;
-    model.jacobian[0][2] = lf * model.s0 * model.s2;
+    if (LR == 'r') {
+        model.jacobian[0][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.c0;
+        model.jacobian[0][1] = -lu * model.s0 * model.s1;
+        model.jacobian[0][2] = lf * model.s0 * model.s2;
+    }
+    else if (LR == 'l') {
+        model.jacobian[0][0] = (lf * model.c2 - lu * model.c1 + wrist_h) * model.c0;
+        model.jacobian[0][1] = lu * model.s0 * model.s1;
+        model.jacobian[0][2] = -lf * model.s0 * model.s2;
+    }
     model.jacobian[0][3] = 0.0; model.jacobian[0][4] = 0.0; model.jacobian[0][5] = 0.0;
 
-    model.jacobian[1][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.s0;
-    model.jacobian[1][1] = lu * model.c0 * model.s1;
-    model.jacobian[1][2] = -lf * model.c0 * model.s2;
+    if (LR == 'r') {
+        model.jacobian[1][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.s0;
+        model.jacobian[1][1] = lu * model.c0 * model.s1;
+        model.jacobian[1][2] = -lf * model.c0 * model.s2;
+    }
+    else if (LR == 'l') {
+        model.jacobian[1][0] = (lf * model.c2 - lu * model.c1 + wrist_h) * model.s0;
+        model.jacobian[1][1] = -lu * model.c0 * model.s1;
+        model.jacobian[1][2] = lf * model.c0 * model.s2;
+    }
     model.jacobian[1][3] = 0.0; model.jacobian[1][4] = 0.0; model.jacobian[1][5] = 0.0;
 
     model.jacobian[2][0] = 0.0;
@@ -92,9 +106,9 @@ void smartyArmControl (Arm *arm, char LR) {
     model.jacobian[3][3] = cx * ((-model.s3 * model.s5 + model.c5 * model.c3 * model.s4) * model.R[2][2] 
                             - (-model.s3 * model.c5 - model.c3 * model.s4 * model.s5) * model.R[2][1]);
     model.jacobian[3][4] = cx * ((model.c5 * model.s3 * model.c4) * model.R[2][2]
-                                - (-model.s3 * model.c4 * model.s5) * model.R[2][1]);
+                            - (-model.s3 * model.c4 * model.s5) * model.R[2][1]);
     model.jacobian[3][5] = cx * ((model.c3 * model.c5 - model.s5 * model.s3 * model.s4) * model.R[2][2]
-                                - (-model.c3 * model.s5 - model.s3 * model.s4 * model.c5) * model.R[2][1]);
+                            - (-model.c3 * model.s5 - model.s3 * model.s4 * model.c5) * model.R[2][1]);
 
     model.jacobian[4][0] = 0.0; model.jacobian[4][1] = 0.0; model.jacobian[4][2] = 0.0;
     model.jacobian[4][3] = cy * (-model.c4 * model.c3);
@@ -144,23 +158,12 @@ void smartyArmControl (Arm *arm, char LR) {
 
 
     /* velocity */
-    if (LR == 'r') {
-        arm->ee[0].vel = model.jacobian[0][0] * arm->motor[0].motorIn.act_vel
-                        + model.jacobian[0][1] * (-arm->motor[1].motorIn.act_vel)
-                        + model.jacobian[0][2] * arm->motor[2].motorIn.act_vel;
-        arm->ee[1].vel = model.jacobian[1][0] * arm->motor[0].motorIn.act_vel
-                        + model.jacobian[1][1] * (-arm->motor[1].motorIn.act_vel)
-                        + model.jacobian[1][2] * arm->motor[2].motorIn.act_vel;
-    }
-    else if (LR == 'l') {
-        arm->ee[0].vel = -(model.jacobian[0][0] * arm->motor[0].motorIn.act_vel
-                        + model.jacobian[0][1] * (-arm->motor[1].motorIn.act_vel)
-                        + model.jacobian[0][2] * arm->motor[2].motorIn.act_vel);
-        arm->ee[1].vel = -(model.jacobian[1][0] * arm->motor[0].motorIn.act_vel
-                        + model.jacobian[1][1] * (-arm->motor[1].motorIn.act_vel)
-                        + model.jacobian[1][2] * arm->motor[2].motorIn.act_vel);
-    }
-
+    arm->ee[0].vel = model.jacobian[0][0] * arm->motor[0].motorIn.act_vel
+                    + model.jacobian[0][1] * (-arm->motor[1].motorIn.act_vel)
+                    + model.jacobian[0][2] * arm->motor[2].motorIn.act_vel;
+    arm->ee[1].vel = model.jacobian[1][0] * arm->motor[0].motorIn.act_vel
+                    + model.jacobian[1][1] * (-arm->motor[1].motorIn.act_vel)
+                    + model.jacobian[1][2] * arm->motor[2].motorIn.act_vel;
     arm->ee[2].vel = model.jacobian[2][0] * arm->motor[0].motorIn.act_vel
                     + model.jacobian[2][1] * (-arm->motor[1].motorIn.act_vel)
                     + model.jacobian[2][2] * arm->motor[2].motorIn.act_vel;
@@ -193,7 +196,7 @@ void smartyArmControl (Arm *arm, char LR) {
 
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 4; ratio[1] = 4; ratio[2]= 2;
+    ratio[0] = 4; ratio[1] = 4; ratio[2]= 4;
     /* interface */
     for (int j = 0; j < DOF / 2; j ++) {
         arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];
