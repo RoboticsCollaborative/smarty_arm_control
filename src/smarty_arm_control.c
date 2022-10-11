@@ -153,6 +153,15 @@ void smartyArmControl (Arm *arm, char LR) {
         printf("No rotation angle solution!\n");
     }
 
+    // arm->ee[3].pos = -(arm->motor[2].motorIn.load_pos - arm->motor[2].load_init_pos);
+    // if (LR == 'r') {
+    //     arm->ee[4].pos = (arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos);
+    // }
+    // else if (LR == 'l') {
+    //     arm->ee[4].pos = -(arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos);
+    // }
+    // arm->ee[5].pos = (arm->motor[0].motorIn.act_pos - arm->motor[0].init_pos) + (arm->motor[1].motorIn.load_pos - arm->motor[1].load_init_pos);
+
     // printf("translation x: %+lf, y: %+lf, z: %+lf, rotation x: %+lf, y: %+lf, z: %+lf\r",
         // arm->arm[0].ee[0].pos, arm->arm[0].ee[1].pos, arm->arm[0].ee[2].pos, arm->arm[0].ee[3].pos, arm->arm[0].ee[4].pos, arm->arm[0].ee[5].pos);
 
@@ -194,9 +203,19 @@ void smartyArmControl (Arm *arm, char LR) {
                         + model.jacobian[5][5] * (-arm->motor[2].motorIn.load_vel);
     }
 
+    // arm->ee[3].vel = -arm->motor[2].motorIn.load_vel;
+    // if (LR == 'r') {
+    //     arm->ee[4].vel = arm->motor[0].motorIn.load_vel;
+    // }
+    // else if (LR == 'l') {
+    //     arm->ee[4].vel = -arm->motor[0].motorIn.load_vel;
+    // }
+    // arm->ee[5].vel = arm->motor[0].motorIn.act_vel + arm->motor[1].motorIn.load_vel;
+
+
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 4; ratio[1] = 4; ratio[2]= 4;
+    ratio[0] = 5 ; ratio[1] = 5; ratio[2]= 5;
     /* interface */
     for (int j = 0; j < DOF / 2; j ++) {
         arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];
