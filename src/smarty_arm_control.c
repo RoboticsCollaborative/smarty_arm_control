@@ -215,7 +215,7 @@ void smartyArmControl (Arm *arm, char LR) {
 
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 5 ; ratio[1] = 5; ratio[2]= 5;
+    ratio[0] = 4; ratio[1] = 4; ratio[2]= 4;
     /* interface */
     for (int j = 0; j < DOF / 2; j ++) {
         arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];

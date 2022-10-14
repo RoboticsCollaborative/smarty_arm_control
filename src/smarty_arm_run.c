@@ -126,10 +126,10 @@ int main(int argc, char **argv) {
         pthread_setschedparam(rt_thread, policy, &param);
 
         /* Core-Iso */
-        cpu_set_t CPU3;
-        CPU_ZERO(&CPU3);
-        CPU_SET(3, &CPU3);
-        pthread_setaffinity_np(rt_thread, sizeof(CPU3), &CPU3);
+        cpu_set_t CPU2;
+        CPU_ZERO(&CPU2);
+        CPU_SET(2, &CPU2);
+        pthread_setaffinity_np(rt_thread, sizeof(CPU2), &CPU2);
 
         /* Wait until sub-thread is finished */
         pthread_join(rt_thread, NULL);
