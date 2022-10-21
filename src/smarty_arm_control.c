@@ -6,9 +6,12 @@ void smartyArmControl (Arm *arm, char LR) {
     double lf = 0.45; // forearm length
     double wrist_h = 0.28415; // wrist joint horizontal shift
     double wrist_v = 0.03648; // wrist joint vertical shift
-    double upper_arm_init_offset = M_PI * 3 / 4; // motor 1
-    double forearm_init_offset = M_PI / 4; // motor 2
-    // double num = 3;
+    double upper_arm_init_offset = M_PI * 157.57 / 180; // motor 1
+    double forearm_init_offset = M_PI / 2; // motor 2
+    double x_shift = 0.0;
+    double y_shift = 0.2;
+    double z_shift = 0.3;
+
     double cx, cy, cz;
 
     Model model_init;
@@ -23,14 +26,14 @@ void smartyArmControl (Arm *arm, char LR) {
     model_init.s2 = sin(forearm_init_offset);
 
     if (LR == 'r') {
-        translation_pos_init[0] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0;
-        translation_pos_init[1] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0;
+        translation_pos_init[0] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0 + x_shift;
+        translation_pos_init[1] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0 + y_shift;
     }
     else if (LR == 'l') {
-        translation_pos_init[0] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0;
-        translation_pos_init[1] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0;
+        translation_pos_init[0] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0 + x_shift;
+        translation_pos_init[1] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0 - y_shift;
     }
-    translation_pos_init[2] = lu * model_init.s1 - lf * model_init.s2  + wrist_v;
+    translation_pos_init[2] = lu * model_init.s1 - lf * model_init.s2  + wrist_v + z_shift;
     
 
     Model model;
