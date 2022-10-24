@@ -1,5 +1,4 @@
 #include "smarty_arm_control.h"
-
 void smartyArmControl (Arm *arm, char LR) {
 
     double lu = 0.51; // upper arm length
@@ -11,11 +10,25 @@ void smartyArmControl (Arm *arm, char LR) {
     double x_shift = 0.0;
     double y_shift = 0.2;
     double z_shift = 0.3;
+    double pos_shift[DOF/2];
+    double max_shift_vel = 0.5;
+    double sample_time = 0.25e-3;
 
     double cx, cy, cz;
 
     Model model_init;
     double translation_pos_init[3];
+
+    for (int i = 0; i < DOF/2; i ++) {
+        pos_shift[i] = arm->ptiPacket[i].position_origin_shift;
+        if (pos_shift[i] - prev_origin_shift[i] > 0) {
+            pos_shift[i] = MIN(pos_shift[i], prev_origin_shift[i] + max_shift_vel * sample_time);
+        }
+        else {
+            pos_shift[i] = MAX(pos_shift[i], prev_origin_shift[i] - max_shift_vel * sample_time);
+        }
+        prev_origin_shift[i] = pos_shift[i];
+    }
     
     model_init.c0 = 1.0;
     model_init.c1 = cos(upper_arm_init_offset);
@@ -26,14 +39,14 @@ void smartyArmControl (Arm *arm, char LR) {
     model_init.s2 = sin(forearm_init_offset);
 
     if (LR == 'r') {
-        translation_pos_init[0] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0 + x_shift;
-        translation_pos_init[1] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0 + y_shift;
+        translation_pos_init[0] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0 + x_shift + pos_shift[0];
+        translation_pos_init[1] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0 + y_shift + pos_shift[1];
     }
     else if (LR == 'l') {
-        translation_pos_init[0] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0 + x_shift;
-        translation_pos_init[1] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0 - y_shift;
+        translation_pos_init[0] = (lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.s0 + x_shift + pos_shift[0];
+        translation_pos_init[1] = -(lf * model_init.c2 - lu * model_init.c1 + wrist_h) * model_init.c0 - y_shift + pos_shift[1];
     }
-    translation_pos_init[2] = lu * model_init.s1 - lf * model_init.s2  + wrist_v + z_shift;
+    translation_pos_init[2] = lu * model_init.s1 - lf * model_init.s2  + wrist_v + z_shift + pos_shift[2];
     
 
     Model model;

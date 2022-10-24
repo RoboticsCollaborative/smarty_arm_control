@@ -28,6 +28,11 @@ typedef struct {
     double R[3][3];
 } Model;
 
+double prev_origin_shift[DOF/2];
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 void smartyArmControl(Arm *arm, char LR);
 
 #endif // SMARTY_ARM_CONTROL_H

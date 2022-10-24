@@ -75,6 +75,9 @@ void arm_run (void *ifnameptr) {
     struct timespec startTime, endTime;
     int controlInterval;
     arm_gettime(ecatSlaves);
+    for (int i = 0; i < DOF/2; i ++) {
+        prev_origin_shift[i] = 0.0;
+    }
 
     while (!done) {
 
