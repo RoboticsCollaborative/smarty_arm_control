@@ -8,7 +8,7 @@ void smartyArmControl (Arm *arm, char LR) {
     double upper_arm_init_offset = M_PI * 157.57 / 180; // motor 1
     double forearm_init_offset = M_PI / 2; // motor 2
     double x_shift = 0.0;
-    double y_shift = 0.2;
+    double y_shift = 0.1;
     double z_shift = 0.3;
     double pos_shift[DOF/2];
     double max_shift_vel = 0.5;
@@ -85,10 +85,6 @@ void smartyArmControl (Arm *arm, char LR) {
     model.R[2][2] = model.c3 * model.c5 - model.s3 * model.s4 * model.s5;
 
     /* Jacobian */
-    cx = 1.0 / (model.R[2][2] * model.R[2][2] + model.R[2][1] * model.R[2][1]);
-    cy = -1.0 / sqrt(1 - model.R[2][0] * model.R[2][0]);
-    cz = 1.0 / (model.R[0][0] * model.R[0][0] + model.R[1][0] * model.R[1][0]);
-
     if (LR == 'r') {
         model.jacobian[0][0] = -(lf * model.c2 - lu * model.c1 + wrist_h) * model.c0;
         model.jacobian[0][1] = -lu * model.s0 * model.s1;
@@ -118,26 +114,56 @@ void smartyArmControl (Arm *arm, char LR) {
     model.jacobian[2][2] = -lf * model.c2;
     model.jacobian[2][3] = 0.0; model.jacobian[2][4] = 0.0; model.jacobian[2][5] = 0.0;
 
-    model.jacobian[3][0] = 0.0; model.jacobian[3][1] = 0.0; model.jacobian[3][2] = 0.0;
-    model.jacobian[3][3] = cx * ((-model.s3 * model.s5 + model.c5 * model.c3 * model.s4) * model.R[2][2] 
-                            - (-model.s3 * model.c5 - model.c3 * model.s4 * model.s5) * model.R[2][1]);
-    model.jacobian[3][4] = cx * ((model.c5 * model.s3 * model.c4) * model.R[2][2]
-                            - (-model.s3 * model.c4 * model.s5) * model.R[2][1]);
-    model.jacobian[3][5] = cx * ((model.c3 * model.c5 - model.s5 * model.s3 * model.s4) * model.R[2][2]
-                            - (-model.c3 * model.s5 - model.s3 * model.s4 * model.c5) * model.R[2][1]);
+    // cx = 1.0 / (model.R[2][2] * model.R[2][2] + model.R[2][1] * model.R[2][1]);
+    // cy = -1.0 / sqrt(1 - model.R[2][0] * model.R[2][0]);
+    // cz = 1.0 / (model.R[0][0] * model.R[0][0] + model.R[1][0] * model.R[1][0]);
 
-    model.jacobian[4][0] = 0.0; model.jacobian[4][1] = 0.0; model.jacobian[4][2] = 0.0;
-    model.jacobian[4][3] = cy * (-model.c4 * model.c3);
-    model.jacobian[4][4] = cy * (model.s4 * model.s3);
+    // model.jacobian[3][0] = 0.0; model.jacobian[3][1] = 0.0; model.jacobian[3][2] = 0.0;
+    // model.jacobian[3][3] = cx * ((-model.s3 * model.s5 + model.c5 * model.c3 * model.s4) * model.R[2][2] 
+    //                         - (-model.s3 * model.c5 - model.c3 * model.s4 * model.s5) * model.R[2][1]);
+    // model.jacobian[3][4] = cx * ((model.c5 * model.s3 * model.c4) * model.R[2][2]
+    //                         - (-model.s3 * model.c4 * model.s5) * model.R[2][1]);
+    // model.jacobian[3][5] = cx * ((model.c3 * model.c5 - model.s5 * model.s3 * model.s4) * model.R[2][2]
+    //                         - (-model.c3 * model.s5 - model.s3 * model.s4 * model.c5) * model.R[2][1]);
+
+    // model.jacobian[4][0] = 0.0; model.jacobian[4][1] = 0.0; model.jacobian[4][2] = 0.0;
+    // model.jacobian[4][3] = cy * (-model.c4 * model.c3);
+    // model.jacobian[4][4] = cy * (model.s4 * model.s3);
+    // model.jacobian[4][5] = 0.0;
+
+    // model.jacobian[5][1] = 0.0; model.jacobian[5][2] = 0.0; model.jacobian[5][5] = 0.0;
+    // model.jacobian[5][0] = cz * ((-model.s0 * model.s4 + model.c3 * model.c3 * model.c0) * model.R[0][0] 
+    //                         - (-model.s0 * model.c3 * model.c4 - model.c0 * model.s4) * model.R[1][0]);
+    // model.jacobian[5][3] = cz * ((-model.s3 * model.c4 * model.s0) * model.R[0][0] 
+    //                         - (-model.c0 * model.s3 * model.c4) * model.R[1][0]);
+    // model.jacobian[5][4] = cz * ((model.c0 * model.c4 - model.c3 * model.s4 * model.s0) * model.R[0][0] 
+    //                         - (-model.c0 * model.c3 * model.s4 - model.s0 * model.c4) * model.R[1][0]);
+
+
+    cx = 1.0 / (model.R[1][2] * model.R[1][2] + model.R[1][1] * model.R[1][1]);
+    cy = 1.0 / (model.R[2][0] * model.R[2][0] + model.R[0][0] * model.R[0][0]);
+    cz = 1.0 / sqrt(1 - model.R[1][0] * model.R[1][0]);
+
+    model.jacobian[3][0] = cx * (-(model.c5 * model.c0 * model.s3 - model.s5 * (-model.s0 * model.c4 - model.c3 * model.c0 * model.s4)) * model.R[1][1] 
+                            + (model.c5 * (-model.s0 * model.c4 - model.c3 * model.c0 * model.s4) + model.c0 * model.s3 * model.s5) * model.R[1][2]); 
+    model.jacobian[3][1] = 0.0; model.jacobian[3][2] = 0.0;
+    model.jacobian[3][3] = cx * (-(model.c5 * model.s0 * model.c3 - model.s5 * model.s3 * model.s0 * model.s4) * model.R[1][1] 
+                            + (model.c5 * model.s3 * model.s0 * model.s4 + model.s0 * model.c3 * model.s5) * model.R[1][2]);
+    model.jacobian[3][4] = cx * (-(-model.s5 * (-model.c0 * model.s4 - model.c3 * model.s0 * model.c4)) * model.R[1][1]
+                            + (model.c5 * (-model.c0 * model.s4 - model.c3 * model.s0 * model.c4)) * model.R[1][2]);
+    model.jacobian[3][5] = cx * (-(-model.s5 * model.s0 * model.s3 - model.c5 * (model.c0 * model.c4 - model.c3 * model.s0 * model.s4)) * model.R[1][1]
+                            + (-model.s5 * (model.c0 * model.c4 - model.c3 * model.s0 * model.s4) + model.s0 * model.s3 * model.c5) * model.R[1][2]);
+
+    model.jacobian[4][0] = cy * ((-model.s0 * model.c3 * model.c4 - model.c0 * model.s4) * model.R[2][0]); 
+    model.jacobian[4][1] = 0.0; model.jacobian[4][2] = 0.0;
+    model.jacobian[4][3] = cy * (-(-model.c4 * model.c3) * model.R[0][0] + (-model.c0 * model.s3 * model.c4) * model.R[2][0]);
+    model.jacobian[4][4] = cy * (-(model.s4 * model.s3) * model.R[0][0] + (-model.c0 * model.c3 * model.s4 - model.s0 * model.c4) * model.R[2][0]);
     model.jacobian[4][5] = 0.0;
 
     model.jacobian[5][1] = 0.0; model.jacobian[5][2] = 0.0; model.jacobian[5][5] = 0.0;
-    model.jacobian[5][0] = cz * ((-model.s0 * model.s4 + model.c3 * model.c3 * model.c0) * model.R[0][0] 
-                            - (-model.s0 * model.c3 * model.c4 - model.c0 * model.s4) * model.R[1][0]);
-    model.jacobian[5][3] = cz * ((-model.s3 * model.c4 * model.s0) * model.R[0][0] 
-                            - (-model.c0 * model.s3 * model.c4) * model.R[1][0]);
-    model.jacobian[5][4] = cz * ((model.c0 * model.c4 - model.c3 * model.s4 * model.s0) * model.R[0][0] 
-                            - (-model.c0 * model.c3 * model.s4 - model.s0 * model.c4) * model.R[1][0]);
+    model.jacobian[5][0] = cz * (-model.s0 * model.s4 + model.c3 * model.c4 * model.c0);
+    model.jacobian[5][3] = cz * (-model.s3 * model.c4 * model.s0);
+    model.jacobian[5][4] = cz * (model.c0 * model.c4 - model.c3 * model.s4 * model.s0);
 
     /* position */
     if (LR == 'r') {
@@ -150,22 +176,18 @@ void smartyArmControl (Arm *arm, char LR) {
     }
     arm->ee[2].pos = lu * model.s1 - lf * model.s2 + wrist_v - translation_pos_init[2];
 
-    arm->ee[3].pos = atan2(model.R[2][1], model.R[2][2]);
-    arm->ee[4].pos = atan2(-model.R[2][0], sqrt(model.R[2][1] * model.R[2][1] + model.R[2][2] * model.R[2][2]));
-    arm->ee[5].pos = atan2(model.R[1][0], model.R[0][0]);
+    // arm->ee[3].pos = atan2(model.R[2][1], model.R[2][2]);
+    // arm->ee[4].pos = asin(-model.R[2][0]);
+    // arm->ee[5].pos = atan2(model.R[1][0], model.R[0][0]);
 
-    // arm->ee[3].pos = -(arm->motor[2].motorIn.load_pos - arm->motor[2].load_init_pos);
-    // if (LR == 'r') {
-    //     arm->ee[4].pos = (arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos);
-    // }
-    // else if (LR == 'l') {
-    //     arm->ee[4].pos = -(arm->motor[0].motorIn.load_pos - arm->motor[0].load_init_pos);
-    // }
-    // arm->ee[5].pos = (arm->motor[0].motorIn.act_pos - arm->motor[0].init_pos) + (arm->motor[1].motorIn.load_pos - arm->motor[1].load_init_pos);
+    arm->ee[3].pos = atan2(-model.R[1][2], model.R[1][1]);
+    arm->ee[4].pos = atan2(-model.R[2][0], model.R[0][0]);
+    arm->ee[5].pos = asin(model.R[1][0]);
 
-    // printf("translation x: %+lf, y: %+lf, z: %+lf, rotation x: %+lf, y: %+lf, z: %+lf\r",
-        // arm->arm[0].ee[0].pos, arm->arm[0].ee[1].pos, arm->arm[0].ee[2].pos, arm->arm[0].ee[3].pos, arm->arm[0].ee[4].pos, arm->arm[0].ee[5].pos);
-
+    arm->quat.w = sqrt(1.0 + model.R[0][0] + model.R[1][1] + model.R[2][2]) / 2.0;
+    arm->quat.x = (model.R[2][1] - model.R[1][2]) / (4.0 * arm->quat.w);
+    arm->quat.y = (model.R[0][2] - model.R[2][0]) / (4.0 * arm->quat.w);
+    arm->quat.z = (model.R[1][0] - model.R[0][1]) / (4.0 * arm->quat.w);
 
     /* velocity */
     arm->ee[0].vel = model.jacobian[0][0] * arm->motor[0].motorIn.act_vel
@@ -204,19 +226,10 @@ void smartyArmControl (Arm *arm, char LR) {
                         + model.jacobian[5][5] * (-arm->motor[2].motorIn.load_vel);
     }
 
-    // arm->ee[3].vel = -arm->motor[2].motorIn.load_vel;
-    // if (LR == 'r') {
-    //     arm->ee[4].vel = arm->motor[0].motorIn.load_vel;
-    // }
-    // else if (LR == 'l') {
-    //     arm->ee[4].vel = -arm->motor[0].motorIn.load_vel;
-    // }
-    // arm->ee[5].vel = arm->motor[0].motorIn.act_vel + arm->motor[1].motorIn.load_vel;
-
 
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 4; ratio[1] = 4; ratio[2]= 4;
+    ratio[0] = 3; ratio[1] = 3; ratio[2]= 3;
     /* interface */
     for (int j = 0; j < DOF / 2; j ++) {
         arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];

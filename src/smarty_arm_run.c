@@ -90,8 +90,7 @@ void arm_run (void *ifnameptr) {
         smartyArmControl(arm, *ifname);
 
         /* Error code detection */
-        done = errorCheck(ecatSlaves);
-
+        if (!done) done = errorCheck(ecatSlaves);
         mutex_unlock(&arm->mutex);
 
         clock_gettime(CLOCK_MONOTONIC, &endTime);
