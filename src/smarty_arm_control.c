@@ -150,24 +150,9 @@ void smartyArmControl (Arm *arm, char LR) {
     }
     arm->ee[2].pos = lu * model.s1 - lf * model.s2 + wrist_v - translation_pos_init[2];
 
-    if (model.R[2][0] < 1.0 && model.R[2][0] > -1.0) {
-        arm->ee[3].pos = atan2(model.R[2][1], model.R[2][2]);
-        arm->ee[4].pos = atan2(-model.R[2][0], sqrt(model.R[2][1] * model.R[2][1] + model.R[2][2] * model.R[2][2]));
-        arm->ee[5].pos = atan2(model.R[1][0], model.R[0][0]);
-    }
-    else if (model.R[2][0] == 1.0) {
-        arm->ee[3].pos = 0.0;
-        arm->ee[4].pos = M_PI / 2;
-        arm->ee[5].pos = -atan2(-model.R[1][2], model.R[1][1]);
-    }
-    else if (model.R[2][0] == 1.0) {
-        arm->ee[3].pos = 0.0;
-        arm->ee[4].pos = -M_PI / 2;
-        arm->ee[5].pos = atan2(-model.R[1][2], model.R[1][1]);
-    }
-    else {
-        printf("No rotation angle solution!\n");
-    }
+    arm->ee[3].pos = atan2(model.R[2][1], model.R[2][2]);
+    arm->ee[4].pos = atan2(-model.R[2][0], sqrt(model.R[2][1] * model.R[2][1] + model.R[2][2] * model.R[2][2]));
+    arm->ee[5].pos = atan2(model.R[1][0], model.R[0][0]);
 
     // arm->ee[3].pos = -(arm->motor[2].motorIn.load_pos - arm->motor[2].load_init_pos);
     // if (LR == 'r') {
