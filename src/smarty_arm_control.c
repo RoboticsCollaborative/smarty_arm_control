@@ -8,7 +8,7 @@ void smartyArmControl (Arm *arm, char LR) {
     double upper_arm_init_offset = M_PI * 157.57 / 180; // motor 1
     double forearm_init_offset = M_PI / 2; // motor 2
     double x_shift = 0.0;
-    double y_shift = 0.1;
+    double y_shift = 0.05;
     double z_shift = 0.3;
     double pos_shift[DOF/2];
     double max_shift_vel = 0.5;
@@ -229,7 +229,7 @@ void smartyArmControl (Arm *arm, char LR) {
 
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 3; ratio[1] = 3; ratio[2]= 3;
+    ratio[0] = 3; ratio[1] = 2; ratio[2]= 2;
     /* interface */
     for (int j = 0; j < DOF / 2; j ++) {
         arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];
