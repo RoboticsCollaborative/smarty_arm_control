@@ -10,6 +10,7 @@
 #include "arm_base.h"
 
 #define MAX_TORQUE 2.0
+#define DELAY_BUFF 8
 
 typedef struct {
     double c0;
@@ -30,9 +31,19 @@ typedef struct {
 
 double prev_origin_shift[DOF/2];
 
+typedef struct {
+    double um_prev[DOF/2][DELAY_BUFF];
+    double eAT[DOF/2][DOF/2];
+    double eATB[DOF/2][2];
+    double eATG[DOF/2][2];
+    double C[DOF/2];
+    double D;
+} Wave_Prediction;
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-void smartyArmControl(Arm *arm, char LR);
+void smartyArmControl(Arm *arm, Wave_Prediction *wp, char LR);
+void smartyARMControlInit(Wave_Prediction *wp);
 
 #endif // SMARTY_ARM_CONTROL_H

@@ -133,12 +133,15 @@ void initArmStates(ecat_slaves *ecatSlaves, Arm *arm) {
         arm->ptiPacket[j].test = 0.0;
         /* Init ROS inputs */
         arm->ptiPacket[j].pos_in = 0.0;
+        arm->ptiPacket[j].pos_d_in = 0.0;
+        arm->ptiPacket[j].vel_in = 0.0;
         arm->ptiPacket[j].wave_in = 0.0;
         arm->ptiPacket[j].wave_in_aux = 0.0;
         arm->ptiPacket[j].position_origin_shift = 0.0;
     }
     
     arm->ts.sec = arm->ts.nsec = 0;
+    arm->ts.delay_cycle = 0;
 }
 
 /** Error Check

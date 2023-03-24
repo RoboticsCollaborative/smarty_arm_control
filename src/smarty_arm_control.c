@@ -1,5 +1,44 @@
 #include "smarty_arm_control.h"
-void smartyArmControl (Arm *arm, char LR) {
+void smartyARMControlInit(Wave_Prediction *wp) {
+    for (int i = 0; i < DOF/2; i ++) {
+        for (int j = 0; j < DELAY_BUFF; j ++) {
+            wp->um_prev[i][j] = 0.0;
+        }
+    }
+
+    wp->eAT[0][0] = 0.94773224;
+    wp->eAT[0][1] = 0.05226776;
+    wp->eAT[0][2] = 0.00156160;
+    wp->eAT[1][0] = 0.00009593;
+    wp->eAT[1][1] = 0.99990406;
+    wp->eAT[1][2] = 0.00199717;
+    wp->eAT[2][0] = 0.09503229;
+    wp->eAT[2][1] = -0.09503229;
+    wp->eAT[2][2] = 0.99716072;
+
+    wp->eATB[0][0] = 0.09801595;
+    wp->eATB[1][0] = 0.00063294;
+    wp->eATB[2][0] = 0.63490481;
+    wp->eATB[0][1] = 0.09592911;
+    wp->eATB[1][1] = 0.00126976;
+    wp->eATB[2][1] = 0.63869905;
+
+    wp->eATG[0][0] = -0.00014153;
+    wp->eATG[1][0] = -0.00018169;
+    wp->eATG[2][0] = -0.18156085;
+    wp->eATG[0][1] = -0.00028393;
+    wp->eATG[1][1] = -0.00036312;
+    wp->eATG[2][1] = -0.18130195;
+
+    wp->C[0] = -120.21597196;
+    wp->C[1] = 120.21597196;
+    wp->C[2] = 3.47033619;
+
+    wp->D = -0.55198152;
+
+}
+
+void smartyArmControl (Arm *arm, Wave_Prediction *wp, char LR) {
 
     double lu = 0.51; // upper arm length
     double lf = 0.45; // forearm length
@@ -229,11 +268,37 @@ void smartyArmControl (Arm *arm, char LR) {
 
     double wave_damping = 10.0;
     double ratio[3];
-    ratio[0] = 3; ratio[1] = 2; ratio[2]= 2;
+    ratio[0] = 5; ratio[1] = 5; ratio[2]= 5;
+
+    double predicted_state[3][3];
+    double predicted_wave[3];
+    double wave_in[3];
+    // double regulated_vm[3];
     /* interface */
+    for (int i = 0; i < DOF/2; i ++) {
+        for (int j = 0; j < DOF/2; j ++) {
+            predicted_state[j][i] = wp->eAT[j][0] * arm->ptiPacket[i].pos_d_in + wp->eAT[j][1] * arm->ptiPacket[i].pos_in + wp->eAT[j][2] * arm->ptiPacket[i].vel_in
+                                    + (wp->eATB[j][0] * (wp->um_prev[i][0] + wp->um_prev[i][1] + wp->um_prev[i][2] + wp->um_prev[i][3])
+                                    + wp->eATB[j][1] * (wp->um_prev[i][4] + wp->um_prev[i][5] + wp->um_prev[i][6] + wp->um_prev[i][7])) * sample_time;
+        }
+        predicted_wave[i] = wp->C[0] * predicted_state[0][i] + wp->C[1] * predicted_state[1][i] + wp->C[2] * predicted_state[2][i]
+                            + wp->D * wp->um_prev[i][0];
+        arm->ptiPacket[i].test = predicted_wave[i];
+        wave_in[i] = arm->ptiPacket[i].wave_in;
+        // regulated_vm[i] = MAX(predicted_wave[i], -1.0 * fabs(wave_in[i]));
+        // regulated_vm[i] = MIN(predicted_wave[i], fabs(wave_in[i]));
+    }
+
     for (int j = 0; j < DOF / 2; j ++) {
-        arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * arm->ptiPacket[j].wave_in) / ratio[j];
+        arm->ee[j].force = -1.0 * (wave_damping * arm->ee[j].vel - sqrt(2.0 * wave_damping) * wave_in[j]) / ratio[j];
         arm->ptiPacket[j].wave_out = sqrt(2.0 * wave_damping) * arm->ee[j].vel - arm->ptiPacket[j].wave_in;
+    }
+
+    for (int i = 0; i < DOF/2; i ++) {
+        for (int j = 0; j < DELAY_BUFF - 1; j ++) {
+            wp->um_prev[i][DELAY_BUFF-1-j] = wp->um_prev[i][DELAY_BUFF-2-j];
+        }
+        wp->um_prev[i][0] = arm->ptiPacket[i].wave_out;
     }
 
     for (int j = 0; j < DOF; j ++) {

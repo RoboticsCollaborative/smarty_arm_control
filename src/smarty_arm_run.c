@@ -52,6 +52,7 @@ void arm_run (void *ifnameptr) {
 
     /* User friendly struct */
     Arm *arm;
+    Wave_Prediction wp;
 
     /* Initialize user-friendly struct */
     arm = initArm(*ifname);
@@ -63,6 +64,7 @@ void arm_run (void *ifnameptr) {
 
     initArmStates(ecatSlaves, arm);
     arm_update(ecatSlaves, arm);
+    smartyARMControlInit(&wp);
 
     int cycletime;
 
@@ -87,7 +89,7 @@ void arm_run (void *ifnameptr) {
         mutex_lock(&arm->mutex);
 
         arm_update(ecatSlaves, arm);
-        smartyArmControl(arm, *ifname);
+        smartyArmControl(arm, &wp, *ifname);
 
         /* Error code detection */
         if (!done) done = errorCheck(ecatSlaves);
