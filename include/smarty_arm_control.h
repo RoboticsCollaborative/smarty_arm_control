@@ -29,7 +29,7 @@ typedef struct {
     double R[3][3];
 } Model;
 
-double prev_origin_shift[DOF/2];
+static double prev_origin_shift[DOF/2];
 
 typedef struct {
     double um_prev[DOF/2][DELAY_BUFF];
