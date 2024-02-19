@@ -34,3 +34,7 @@ target_link_libraries(${PROJECT_NAME}
         ${PROJECT_NAME}_lib
         )
 
+# Install the executable
+install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION bin
+)
