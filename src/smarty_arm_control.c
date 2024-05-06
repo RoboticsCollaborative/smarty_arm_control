@@ -307,15 +307,19 @@ void smartyArmControl (Arm *arm, Wave_Prediction *wp, char LR) {
 
     double motor_torque_raw[3];
     /* ee force to motor torque */
-    motor_torque_raw[0] = model.jacobian[0][0] * arm->ee[0].force
-                        + model.jacobian[1][0] * arm->ee[1].force
-                        + model.jacobian[2][0] * arm->ee[2].force;
-    motor_torque_raw[1] = -(model.jacobian[0][1] * arm->ee[0].force
-                        + model.jacobian[1][1] * arm->ee[1].force
-                        + model.jacobian[2][1] * arm->ee[2].force);
-    motor_torque_raw[2] = model.jacobian[0][2] * arm->ee[0].force
-                        + model.jacobian[1][2] * arm->ee[1].force
-                        + model.jacobian[2][2] * arm->ee[2].force;
+    /* Disable the feedback on the smarty arm motor for Diffusion Policy setup*/
+    motor_torque_raw[0] = 0.0;
+    motor_torque_raw[1] = 0.0;
+    motor_torque_raw[2] = 0.0;
+    // motor_torque_raw[0] = model.jacobian[0][0] * arm->ee[0].force
+    //                     + model.jacobian[1][0] * arm->ee[1].force
+    //                     + model.jacobian[2][0] * arm->ee[2].force;
+    // motor_torque_raw[1] = -(model.jacobian[0][1] * arm->ee[0].force
+    //                     + model.jacobian[1][1] * arm->ee[1].force
+    //                     + model.jacobian[2][1] * arm->ee[2].force);
+    // motor_torque_raw[2] = model.jacobian[0][2] * arm->ee[0].force
+    //                     + model.jacobian[1][2] * arm->ee[1].force
+    //                     + model.jacobian[2][2] * arm->ee[2].force;
 
     // printf("%+lf, %+lf, %+lf\r", arm->ee[0].force, arm->ee[1].force, arm->ee[2].force);
 
