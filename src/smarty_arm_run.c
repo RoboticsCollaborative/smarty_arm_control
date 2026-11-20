@@ -29,12 +29,11 @@ void arm_run (void *ifnameptr) {
     char *ifname = ifnameptr;
     /* EtherCAT struct */
     ecat_slaves *ecatSlaves;
-
     char* ip;
-    if (*ifname == 'l') {
+    if (*ifname == 'r') {
         ip = (char*)"enx000ec682b108";
     }
-    else if (*ifname == 'r') {
+    else if (*ifname == 'l') {
         ip = (char*)"enx000ec682b14d";
     }
     else {

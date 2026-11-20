@@ -79,7 +79,7 @@ slaveIdentify(ecat_slaves *slave) {
             }
             /* motor1 */
             // left arm upper arm motor drive
-            else if (serial_num == 0x01436A01) {
+            else if (serial_num == 0x014369F8) {
                 slave->aev[1].slave_id = idx;
                 /* CompleteAccess disabled for AEV drive */
                 //ec_slave[slaveIdx].CoEdetails ^= ECT_COEDET_SDOCA;
@@ -150,7 +150,6 @@ ecat_slaves *initEcatConfig(void *ifnameptr) {
     if (ecatSlaves == NULL) {
         return NULL;
     }
-
     printf("Begin network configuration\n");
     /* Initialize SOEM, bind socket to ifname */
     if (ec_init(ifname)) {
